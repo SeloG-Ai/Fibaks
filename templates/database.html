@@ -1,0 +1,2742 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibaks Verify - Veri Havuzu & DB Explorer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- SheetJS for client-side Excel parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Design System - Premium Glassmorphic Beyaz Tema */
+        :root {
+            --bg-color: #f1f5f9;
+            --panel-bg: rgba(255, 255, 255, 0.75);
+            --card-bg: rgba(255, 255, 255, 0.45);
+            --border-color: rgba(15, 23, 42, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            
+            /* Status Colors */
+            --color-green: #10b981;
+            --color-red: #ef4444;
+            --color-orange: #f97316;
+            --color-blue: #3b82f6;
+            --color-purple: #8b5cf6;
+            --color-pink: #ec4899;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(139, 92, 246, 0.04) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.04) 0px, transparent 50%);
+            min-height: 100vh;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--color-blue), var(--color-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.25));
+        }
+
+        .logo-title {
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .navbar {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-primary);
+            background: rgba(15, 23, 42, 0.04);
+        }
+
+        .nav-btn.active {
+            color: var(--text-primary);
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        }
+
+        .main-container {
+            max-width: 1650px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Glassmorphic Panel Card */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.25rem;
+        }
+
+        .panel-title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Table Control Actions bar */
+        .table-actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .table-selector-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-select-btn {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .tab-select-btn:hover {
+            background: #ffffff;
+            color: var(--text-primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+
+        .tab-select-btn.active {
+            background: linear-gradient(135deg, var(--color-blue), var(--color-purple));
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+        }
+
+        .search-wrapper {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: #ffffff;
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--color-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+        }
+
+        /* Gorgeous Custom Table styles */
+        .table-responsive-container {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(255,255,255,0.25);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.01);
+        }
+
+        table.explorer-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
+        }
+
+        table.explorer-table th {
+            background: rgba(248, 250, 252, 0.8);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        table.explorer-table td {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            vertical-align: middle;
+            white-space: nowrap;
+            max-width: 320px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        table.explorer-table tbody tr {
+            background: rgba(255,255,255,0.4);
+            transition: all 0.2s ease;
+        }
+
+        table.explorer-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+            transform: translateY(-1px);
+        }
+
+        table.explorer-table tbody tr.product-row {
+            transition: border-left 0.2s ease, background-color 0.2s ease;
+            border-left: 0px solid transparent;
+        }
+
+        table.explorer-table tbody tr.product-row.expanded-parent {
+            background: rgba(59, 130, 246, 0.04) !important;
+            border-left: 4px solid var(--color-blue);
+        }
+
+        .mappings-container-wrapper {
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mapping-column {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mapping-column:hover {
+            transform: translateY(-2px);
+        }
+
+        .trendyol-col:hover {
+            box-shadow: 0 6px 24px rgba(249, 115, 22, 0.08) !important;
+            border-color: rgba(249, 115, 22, 0.25) !important;
+        }
+
+        .hepsiburada-col:hover {
+            box-shadow: 0 6px 24px rgba(59, 130, 246, 0.08) !important;
+            border-color: rgba(59, 130, 246, 0.25) !important;
+        }
+
+        /* Type badges */
+        .db-cell-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+
+        .db-cell-badge.null {
+            background: rgba(100, 116, 139, 0.1);
+            color: #64748b;
+        }
+
+        .db-cell-badge.id {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--color-purple);
+        }
+
+        .db-cell-badge.number {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--color-green);
+        }
+
+        /* JSON raw button */
+        .btn-view-json {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--color-purple);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .btn-view-json:hover {
+            background: var(--color-purple);
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.25);
+        }
+
+        /* Pagination area */
+        .pagination-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .pagination-info {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .page-btn {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: rgba(15, 23, 42, 0.04);
+            color: var(--text-primary);
+        }
+
+        .page-btn.active {
+            background: var(--color-blue);
+            color: #ffffff;
+            border-color: transparent;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Glassmorphic Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 1rem;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(15, 23, 42, 0.05);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            font-family: monospace;
+            background: rgba(15, 23, 42, 0.03);
+            border-radius: 12px;
+            margin: 1.5rem;
+            margin-top: 0;
+            border: 1px solid var(--border-color);
+        }
+
+        pre.pretty-json {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #0f172a;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .toast-notification {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-left: 5px solid var(--color-blue);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 1100;
+            animation: slideUp 0.3s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .no-data-info {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .no-data-icon {
+            font-size: 2rem;
+            color: rgba(15, 23, 42, 0.15);
+        }
+
+        /* Dynamic category quick search badges */
+        .category-filter-badge {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.01);
+        }
+        .category-filter-badge:hover {
+            background: #ffffff;
+            color: var(--text-primary);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            transform: translateY(-1px);
+        }
+        .category-filter-badge.active {
+            background: var(--color-blue);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="/" class="logo-area">
+            <i class="fa-solid fa-database logo-icon"></i>
+            <div>
+                <div class="logo-title">Fibaks <strong>Verify</strong></div>
+                <div class="logo-subtitle">Depo & Sipariş Veri Havuzu</div>
+            </div>
+        </a>
+        <div class="navbar">
+            <a href="/" class="nav-btn"><i class="fa-solid fa-chart-line"></i> Sipariş Dashboard</a>
+            <button class="nav-btn active"><i class="fa-solid fa-database"></i> Veri Havuzu</button>
+            <a href="/simulate" class="nav-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> Sipariş Simülatörü</a>
+            <a href="/whatsapp" class="nav-btn" style="background: rgba(37, 211, 102, 0.08); border-color: rgba(37, 211, 102, 0.3);">
+                <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 1.05rem;"></i> WhatsApp CRM <span class="badge" id="whatsapp-badge" style="display: none; background: var(--color-red); color: white; border-radius: 50%; padding: 0.15rem 0.4rem; font-size: 0.7rem; margin-left: 0.25rem;">0</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="glass-panel">
+            <div class="panel-header">
+                <div class="panel-title-area">
+                    <h2 class="panel-title"><i class="fa-solid fa-server" style="color: var(--color-blue);"></i> Depo & Sipariş Veri Tabanı Explorer</h2>
+                    <p class="panel-desc">Sistemde SQLite / PostgreSQL üzerinde kayıtlı olan tüm dummy ürün kataloğu ve simüle edilmiş pazaryeri sipariş kartları.</p>
+                </div>
+            </div>
+            
+            <div class="table-actions-bar">
+                <div class="table-selector-tabs">
+                    <button class="tab-select-btn active" onclick="loadTable('crm_orders')"><i class="fa-solid fa-square-check"></i> CRM Siparişleri (crm_orders)</button>
+                    <button class="tab-select-btn" onclick="loadTable('order')"><i class="fa-solid fa-basket-shopping"></i> Orijinal ERP Siparişleri (order)</button>
+                    <button class="tab-select-btn" onclick="loadTable('products')"><i class="fa-solid fa-boxes-stacked"></i> Depo Ürün Kartları (products)</button>
+                    <button class="tab-select-btn" onclick="loadTable('product_trendyol')"><i class="fa-solid fa-link"></i> Trendyol Kataloğu</button>
+                    <button class="tab-select-btn" onclick="loadTable('product_hepsiburada')"><i class="fa-solid fa-link"></i> Hepsiburada Kataloğu</button>
+                    <button class="tab-select-btn" onclick="loadTable('compatibilities')" style="border-left: 2px solid var(--color-orange);"><i class="fa-solid fa-layer-group" style="color: var(--color-orange);"></i> Ürün Uyumluluk Matrisi (Kayıtlılar)</button>
+                    <button class="tab-select-btn" onclick="loadTable('all_compatibilities')" style="border-left: 2px solid var(--color-blue);"><i class="fa-solid fa-layer-group" style="color: var(--color-blue);"></i> Ürün Uyumluluk Matrisi (Tüm Ürünler)</button>
+                    <button class="tab-select-btn" onclick="loadTable('erp_proposal')" style="border-left: 2px solid var(--color-purple);"><i class="fa-solid fa-diagram-project" style="color: var(--color-purple);"></i> ERP Entegrasyon Şeması (Öneri)</button>
+                    <button class="tab-select-btn" onclick="loadTable('device_generations')" style="border-left: 2px solid var(--color-green);"><i class="fa-solid fa-mobile-screen-button" style="color: var(--color-green);"></i> Cihaz Nesilleri (Eşleştirme Aileleri)</button>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button id="btn-excel-import" class="tab-select-btn" style="display: none; background: rgba(16, 185, 129, 0.08); color: var(--color-green); border-color: rgba(16, 185, 129, 0.25); font-weight: 700; height: 38px;" onclick="openImportWizard()">
+                        <i class="fa-solid fa-file-excel"></i> Excel'den Ürün Ekle
+                    </button>
+                    <div class="search-wrapper">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="db-search" class="search-input" placeholder="Tüm sütunlarda realtime ara..." oninput="handleSearch()">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick search category filter badges -->
+            <div id="quick-category-filters" style="display: none; gap: 0.45rem; flex-wrap: wrap; padding: 0.85rem 1.1rem; background: rgba(255,255,255,0.25); border-radius: 12px; border: 1px solid var(--border-color); margin-top: -0.5rem; margin-bottom: 1rem;">
+                <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Device Generations Form -->
+            <div id="device-generations-form" style="display: none; background: rgba(255, 255, 255, 0.4); padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+                <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.35rem;">
+                    <i class="fa-solid fa-plus-circle" style="color: var(--color-green);"></i> Yeni Cihaz Nesli/Ailesi Eşleşmesi Ekle
+                </h3>
+                <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1 1 200px;">
+                        <label style="font-size: 0.72rem; font-weight: 700; display: block; margin-bottom: 0.35rem; color: var(--text-secondary);">CİHAZ MODELİ</label>
+                        <input type="text" id="dg-input-model" class="search-input" placeholder="Örn: iPhone 18 Pro Max" style="width: 100%; height: 38px;">
+                    </div>
+                    <div style="flex: 1 1 200px;">
+                        <label style="font-size: 0.72rem; font-weight: 700; display: block; margin-bottom: 0.35rem; color: var(--text-secondary);">NESİL / AİLE GRUBU</label>
+                        <input type="text" id="dg-input-group" class="search-input" placeholder="Örn: iPhone 18" style="width: 100%; height: 38px;">
+                    </div>
+                    <div style="flex: 1 1 150px;">
+                        <label style="font-size: 0.72rem; font-weight: 700; display: block; margin-bottom: 0.35rem; color: var(--text-secondary);">MARKA</label>
+                        <select id="dg-input-brand" class="select-mapping-dropdown" style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: white; color: var(--text-primary); font-size: 0.85rem; font-weight: 600;">
+                            <option value="apple">Apple</option>
+                            <option value="samsung">Samsung</option>
+                            <option value="huawei">Huawei</option>
+                            <option value="xiaomi">Xiaomi</option>
+                            <option value="other">Diğer</option>
+                        </select>
+                    </div>
+                    <button class="btn-view-json" style="background: var(--color-green); border-color: var(--color-green); color: white; height: 38px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0 1.25rem;" onclick="submitNewDeviceGeneration()">
+                        <i class="fa-solid fa-check"></i> Eşleşmeyi Kaydet
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive-container">
+                <table class="explorer-table" id="explorer-table-el">
+                    <thead>
+                        <tr id="table-headers">
+                            <!-- Dynamic -->
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Dynamic -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination-area">
+                <div class="pagination-info" id="pagination-info-el">
+                    Gösterilen Kayıt: 0 - 0 / Toplam: 0
+                </div>
+                <div class="pagination-controls" id="pagination-controls-el">
+                    <!-- Dynamic -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Excel Import Wizard Modal -->
+    <div class="modal-overlay" id="import-wizard-modal" onclick="closeImportWizard(event)">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh;" onclick="event.stopPropagation()">
+            <div class="modal-header" style="background: rgba(255,255,255,0.4);">
+                <h3 class="modal-title"><i class="fa-solid fa-file-excel" style="color: var(--color-green);"></i> Excel Ürün Yükleme Sihirbazı</h3>
+                <button class="modal-close" onclick="closeImportWizard()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Wizard Steps Progress Bar -->
+            <div style="display: flex; justify-content: space-around; padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); background: rgba(255,255,255,0.25); font-size: 0.8rem; font-weight: 700;">
+                <div id="step-indicator-1" style="color: var(--color-blue); display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="background: var(--color-blue); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">1</span> Dosya Yükleme
+                </div>
+                <div id="step-indicator-2" style="color: var(--text-secondary); opacity: 0.5; display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="background: var(--text-secondary); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">2</span> Sütun Eşleştirme
+                </div>
+                <div id="step-indicator-3" style="color: var(--text-secondary); opacity: 0.5; display: flex; align-items: center; gap: 0.4rem;">
+                    <span style="background: var(--text-secondary); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">3</span> Önizleme & Yükleme
+                </div>
+            </div>
+            
+            <div style="flex: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem;">
+                
+                <!-- STEP 1 CONTENT: File Upload -->
+                <div id="wizard-step-1" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div style="text-align: center; border: 2px dashed rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 3rem 1.5rem; background: rgba(16, 185, 129, 0.02); display: flex; flex-direction: column; align-items: center; gap: 1rem; cursor: pointer; transition: all 0.2s ease;" onclick="document.getElementById('excel-file-input').click()" ondragover="event.preventDefault(); this.style.borderColor='var(--color-green)'; this.style.background='rgba(16, 185, 129, 0.05)';" ondragleave="event.preventDefault(); this.style.borderColor='rgba(16, 185, 129, 0.3)'; this.style.background='rgba(16, 185, 129, 0.02)';" ondrop="handleFileDrop(event)">
+                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 3rem; color: var(--color-green); opacity: 0.8;"></i>
+                        <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                            <strong style="font-size: 1.05rem; color: var(--text-primary);">Excel veya CSV dosyanızı buraya sürükleyin</strong>
+                            <span style="font-size: 0.82rem; color: var(--text-secondary);">ya da cihazınızdan seçmek için tıklayın</span>
+                        </div>
+                        <span style="font-size: 0.72rem; color: var(--text-secondary); background: rgba(0,0,0,0.04); padding: 0.25rem 0.6rem; border-radius: 6px;">Yalnızca .xlsx, .xls, .csv formatları desteklenir</span>
+                        <input type="file" id="excel-file-input" style="display: none;" accept=".xlsx, .xls, .csv" onchange="handleFileSelect(event)">
+                    </div>
+                </div>
+                
+                <!-- STEP 2 CONTENT: Column Mapping -->
+                <div id="wizard-step-2" style="display: none; flex-direction: column; gap: 1.5rem;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; background: rgba(59, 130, 246, 0.05); padding: 1rem; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.1);">
+                        <i class="fa-solid fa-circle-info" style="color: var(--color-blue); margin-right: 0.3rem;"></i> <strong>Sütun Eşleştirme Sihirbazı:</strong> Yüklediğiniz Excel dosyasının sütun başlıklarını veritabanındaki hedef alanlarla eşleştirin. Eşleşmeyen veya dosyanızda bulunmayan sütunları <em>(Hiçbiri)</em> olarak bırakabilirsiniz.
+                    </div>
+                    
+                    <!-- Table grid for mapping -->
+                    <div style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: white;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+                            <thead>
+                                <tr style="background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border-color);">
+                                    <th style="padding: 0.75rem 1rem; font-weight: 700; width: 45%;">Hedef Veritabanı Alanı</th>
+                                    <th style="padding: 0.75rem 1rem; font-weight: 700; width: 55%;">Excel Dosyanızdaki Sütun</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mapping-fields-tbody">
+                                <!-- Dynamic rows of mapping -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- STEP 3 CONTENT: Preview & Upload -->
+                <div id="wizard-step-3" style="display: none; flex-direction: column; gap: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(16, 185, 129, 0.05); padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.15);">
+                        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                            <i class="fa-solid fa-circle-check" style="color: var(--color-green); margin-right: 0.3rem;"></i> Toplam <strong style="color: var(--text-primary);" id="preview-row-count">0 adet</strong> satır içe aktarılmaya hazırlandı.
+                        </div>
+                        <span id="wizard-file-name-badge" style="font-size: 0.72rem; font-weight: 700; background: rgba(0,0,0,0.05); padding: 0.25rem 0.5rem; border-radius: 6px;">dosya.xlsx</span>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary);">Eklenecek Verilerden Örnek Önizleme (İlk 3 Satır)</span>
+                        <div style="width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px; background: white;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;" id="import-preview-table">
+                                <thead>
+                                    <tr style="background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border-color);" id="import-preview-headers">
+                                        <!-- Dynamic headers -->
+                                    </tr>
+                                </thead>
+                                <tbody id="import-preview-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Wizard Footer Action Controls -->
+            <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;">
+                <button class="btn-modal btn-modal-cancel" id="wizard-btn-close" onclick="closeImportWizard()">Kapat</button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn-modal btn-modal-cancel" id="wizard-btn-back" style="display: none;" onclick="wizardGoBack()"><i class="fa-solid fa-chevron-left"></i> Geri</button>
+                    <button class="btn-modal btn-modal-save" id="wizard-btn-next" style="display: none; background: var(--color-blue);" onclick="wizardGoNext()">Devam Et <i class="fa-solid fa-chevron-right"></i></button>
+                    <button class="btn-modal btn-modal-save" id="wizard-btn-import" style="display: none; background: var(--color-green);" onclick="submitImport()"><i class="fa-solid fa-upload"></i> Verileri İçe Aktar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pretty JSON Modal -->
+    <div class="modal-overlay" id="json-modal" onclick="closeJsonModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title" id="json-modal-title"><i class="fa-solid fa-code"></i> JSON Detayı</h3>
+                <button class="modal-close" onclick="closeJsonModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <pre class="pretty-json" id="pretty-json-content"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function jsParseBrand(s) {
+            if (!s) return "other";
+            const sLower = s.toLowerCase();
+            if (sLower.includes("iphone") || sLower.includes("ipad") || sLower.includes("ip ") || sLower.includes("i̇p") || sLower.includes("apple")) {
+                return "apple";
+            }
+            if (sLower.includes("galaxy") || sLower.includes("samsung") || sLower.includes("tab")) {
+                return "samsung";
+            }
+            if (sLower.includes("redmi") || sLower.includes("xiaomi") || sLower.includes("mi ") || sLower.includes("poco")) {
+                return "xiaomi";
+            }
+            if (sLower.includes("huawei") || sLower.includes("hw ") || sLower.includes("honor")) {
+                return "huawei";
+            }
+            return "other";
+        }
+
+        function jsParseCompatibility(productModel, labelCompatStr) {
+            let original = (labelCompatStr || "").trim();
+            if (!original || original.toLowerCase() === 'null') {
+                return [];
+            }
+            
+            let brand = jsParseBrand(original);
+            if (brand === "other" && productModel) {
+                brand = jsParseBrand(productModel);
+            }
+            
+            let isIpad = false;
+            if (productModel) {
+                let pmUpper = productModel.toUpperCase();
+                if (pmUpper.includes("IPAD") || pmUpper.includes("TAB")) {
+                    isIpad = true;
+                }
+            }
+            
+            let modelPart = original;
+            // Apply standard translations first
+            modelPart = modelPart.replace(/7-8\s*Plus/gi, '7 Plus - 8 Plus');
+            modelPart = modelPart.replace(/7\s*-\s*8\s*Plus/gi, '7 Plus - 8 Plus');
+            
+            const prefixes = ["RM NT", "İP", "IP", "GLX", "GALAXY", "RM", "REDMI", "MI", "HW", "HUAWEI", "OP", "OPPO"];
+            for (let prefix of prefixes) {
+                if (modelPart.toUpperCase().startsWith(prefix + " ")) {
+                    modelPart = modelPart.substring(prefix.length + 1).trim();
+                    break;
+                }
+            }
+            
+            // Split by '/' or ','
+            let parts = modelPart.split(/[/,]/);
+            let subparts = [];
+            parts.forEach(p => {
+                let trimmed = p.trim();
+                if (trimmed) subparts.push(trimmed);
+            });
+            
+            let finalModels = [];
+            subparts.forEach(part => {
+                if (part.includes("-")) {
+                    let isWatch = part.toLowerCase().endsWith("mm");
+                    let cleanPart = part;
+                    if (isWatch) {
+                        cleanPart = part.toLowerCase().replace("mm", "").trim();
+                    }
+                    let partsHyphen = cleanPart.split("-").map(p => p.trim());
+                    let firstPart = partsHyphen[0];
+                    let expanded = [];
+                    expanded.push(firstPart + (isWatch ? "mm" : ""));
+                    
+                    for (let i = 1; i < partsHyphen.length; i++) {
+                        let ph = partsHyphen[i];
+                        let phExpanded = "";
+                        if (ph.length <= 3 && (ph.toUpperCase().includes("G") || ph.toUpperCase().includes("PRO") || /^\d+$/.test(ph))) {
+                            let baseMatch = firstPart.match(/^(.*?\b)(4G|5G|PRO|ULTRA|\d+)$/i);
+                            if (baseMatch) {
+                                phExpanded = baseMatch[1] + ph;
+                            } else {
+                                phExpanded = firstPart + " " + ph;
+                            }
+                        } else {
+                            phExpanded = ph;
+                        }
+                        expanded.push(phExpanded + (isWatch ? "mm" : ""));
+                    }
+                    finalModels.push(...expanded);
+                } else {
+                    finalModels.push(part);
+                }
+            });
+            
+            let results = [];
+            finalModels.forEach(m => {
+                let mUpper = m.toUpperCase();
+                let prefixToUse = "";
+                
+                if (brand === "apple" && !m.toLowerCase().endsWith("mm")) {
+                    if (!mUpper.startsWith("IPHONE") && !mUpper.startsWith("IPAD")) {
+                        if (isIpad || mUpper.includes("IPAD") || mUpper.includes("AIR")) {
+                            prefixToUse = "iPad ";
+                        } else {
+                            prefixToUse = "iPhone ";
+                        }
+                    }
+                } else if (brand === "samsung" && !m.toLowerCase().endsWith("mm")) {
+                    if (!mUpper.startsWith("GALAXY") && !mUpper.startsWith("S") && !mUpper.startsWith("TAB")) {
+                        prefixToUse = "Galaxy ";
+                    } else if (mUpper.startsWith("S") && !mUpper.startsWith("SAMSUNG")) {
+                        if (/^S\d+/i.test(mUpper)) {
+                            prefixToUse = "Galaxy ";
+                        }
+                    } else if (mUpper.startsWith("TAB")) {
+                        prefixToUse = "Galaxy ";
+                    }
+                } else if (brand === "xiaomi" && !m.toLowerCase().endsWith("mm")) {
+                    if (!mUpper.startsWith("REDMI") && !mUpper.startsWith("XIAOMI") && !mUpper.startsWith("MI")) {
+                        if (productModel && productModel.toUpperCase().includes("NOTE")) {
+                            if (mUpper.startsWith("NOTE")) {
+                                prefixToUse = "Redmi ";
+                            } else {
+                                prefixToUse = "Redmi Note ";
+                            }
+                        } else {
+                            prefixToUse = "Redmi ";
+                        }
+                    }
+                }
+                
+                let normM = m;
+                normM = normM.replace(/\bPLS\b/gi, 'Plus');
+                normM = normM.replace(/([S\d]+)PLS/gi, '$1 Plus');
+                normM = normM.replace(/\bNT\b/gi, 'Note');
+                normM = normM.replace(/\bPRO\s*MAX\b/gi, 'Pro Max');
+                
+                let finalStr = (prefixToUse + normM).trim();
+                finalStr = finalStr.replace(/^iphone/i, 'iPhone');
+                finalStr = finalStr.replace(/^ipad/i, 'iPad');
+                finalStr = finalStr.replace(/^galaxy/i, 'Galaxy');
+                finalStr = finalStr.replace(/^redmi/i, 'Redmi');
+                finalStr = finalStr.replace(/^huawei/i, 'Huawei');
+                finalStr = finalStr.replace(/^honor/i, 'Honor');
+                
+                if (finalStr && !results.includes(finalStr)) {
+                    results.push(finalStr);
+                }
+            });
+            
+            return results;
+        }
+
+        let currentTable = 'crm_orders';
+        let rawData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const rowsPerPage = 50;
+        let selectedCategory = 'ALL';
+
+        function updateWhatsappBadgeCount() {
+            fetch('/api/whatsapp/chats')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const unresolvedCount = data.chats.filter(c => 
+                            c.message_status === 'cevap bekleniyor' || c.message_status === 'itiraz - şikayet'
+                        ).length;
+                        const badge = document.getElementById('whatsapp-badge');
+                        if (badge) {
+                            if (unresolvedCount > 0) {
+                                badge.innerText = unresolvedCount;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error("Error fetching badge count:", err));
+        }
+
+        // Auto load initial table
+        document.addEventListener("DOMContentLoaded", () => {
+            loadTable('crm_orders');
+            updateWhatsappBadgeCount();
+            
+            // Cell click delegation for custom tooltips
+            const tableBody = document.getElementById("table-body");
+            tableBody.addEventListener("click", (e) => {
+                const cell = e.target.closest("td");
+                if (!cell) return;
+                
+                // Skip if clicking actionable buttons, collapsed mapping panels or JSON modal triggers
+                if (e.target.closest("button") || e.target.closest(".btn-view-json") || e.target.closest(".mapping-column") || e.target.closest(".mapping-collapsible-row")) {
+                    return;
+                }
+                
+                const fullText = cell.getAttribute("title") || cell.innerText.trim();
+                if (!fullText || fullText === 'null' || fullText === '[Nesne]' || fullText === '-') return;
+                
+                // Show tooltip if the cell text is truncated or text length > 25
+                if (cell.scrollWidth > cell.clientWidth || fullText.length > 25) {
+                    // Stop row expanding on click if clicking cell with long content
+                    if (currentTable === 'products') {
+                        e.stopPropagation();
+                    }
+                    showCustomTooltip(cell, fullText, e);
+                }
+            });
+            
+            // Close tooltip when clicking outside
+            document.addEventListener("click", (e) => {
+                const tooltip = document.getElementById("custom-cell-tooltip");
+                if (tooltip && tooltip.style.display !== 'none') {
+                    if (!tooltip.contains(e.target) && !e.target.closest("td")) {
+                        closeCustomTooltip();
+                    }
+                }
+            });
+        });
+
+        async function loadTable(tableName) {
+            currentTable = tableName;
+            currentPage = 1;
+            
+            // Toggle excel import button visibility
+            const excelImportBtn = document.getElementById("btn-excel-import");
+            if (excelImportBtn) {
+                excelImportBtn.style.display = tableName === 'products' ? 'inline-flex' : 'none';
+            }
+
+            // Toggle device generations form visibility
+            const dgForm = document.getElementById("device-generations-form");
+            if (dgForm) {
+                dgForm.style.display = tableName === 'device_generations' ? 'block' : 'none';
+            }
+            
+            // Toggle active tabs
+            const tabs = document.querySelectorAll(".tab-select-btn");
+            tabs.forEach(t => {
+                t.classList.remove("active");
+                if (t.getAttribute("onclick").includes(`'${tableName}'`)) {
+                    t.classList.add("active");
+                }
+            });
+            
+            // Clear table & show spinner
+            const tbody = document.getElementById("table-body");
+            
+            if (tableName === 'compatibilities') {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="100" style="text-align: center; padding: 3rem;">
+                            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--color-blue); margin-bottom: 0.5rem;"></i>
+                            <div style="color: var(--text-secondary);">Ürünler ve Cihaz Uyumluluk verileri birleştiriliyor...</div>
+                        </td>
+                    </tr>
+                `;
+                
+                try {
+                    const [respProducts, respMappings, respShadow, respMeta] = await Promise.all([
+                        fetch('/api/db-raw?table=products'),
+                        fetch('/api/db-raw?table=product_device_mappings'),
+                        fetch('/api/db-raw?table=shadow_product_compatibilities'),
+                        fetch('/api/db-raw?table=shadow_compatibility_metadata')
+                    ]);
+                    
+                    const products = await respProducts.json();
+                    const mappings = await respMappings.json();
+                    const shadow = await respShadow.json();
+                    const meta = await respMeta.json();
+                    
+                    if (products.error || mappings.error || shadow.error || meta.error) {
+                        throw new Error(products.error || mappings.error || shadow.error || meta.error);
+                    }
+                    
+                    // Create products fast lookup map
+                    let productsMap = {};
+                    products.forEach(p => {
+                        productsMap[p.id] = p;
+                    });
+                    
+                    // Build a map of product_id -> Set of device_models
+                    let mappingsMap = {};
+                    mappings.forEach(m => {
+                        if (!m.product_id) return;
+                        if (!mappingsMap[m.product_id]) {
+                            mappingsMap[m.product_id] = new Set();
+                        }
+                        if (m.device_model) {
+                            mappingsMap[m.product_id].add(m.device_model);
+                        }
+                    });
+                    
+                    shadow.forEach(s => {
+                        if (!s.product_id) return;
+                        if (!mappingsMap[s.product_id]) {
+                            mappingsMap[s.product_id] = new Set();
+                        }
+                        if (s.normalized_model) {
+                            mappingsMap[s.product_id].add(s.normalized_model);
+                        }
+                    });
+                    
+                    // Build metadata map of product_id -> original_string
+                    let metaMap = {};
+                    meta.forEach(m => {
+                        if (m.product_id && m.original_string) {
+                            metaMap[m.product_id] = m.original_string;
+                        }
+                    });
+                    
+                    // Build a map of device_model -> Array of product info (for all products with compatibility entries)
+                    let deviceToProductsMap = {};
+                    Object.keys(mappingsMap).forEach(pid => {
+                        const p = productsMap[pid];
+                        if (!p) return;
+                        let devSet = mappingsMap[pid];
+                        devSet.forEach(dev => {
+                            if (!deviceToProductsMap[dev]) {
+                                deviceToProductsMap[dev] = [];
+                            }
+                            deviceToProductsMap[dev].push({
+                                id: p.id,
+                                name: p.name,
+                                category: p.category,
+                                model: p.product_model
+                            });
+                        });
+                    });
+                    
+                    // Synthesize the compatibilities list (ONLY for products with mapped devices or shadow models)
+                    let compData = [];
+                    Object.keys(mappingsMap).forEach(pid => {
+                        const p = productsMap[pid];
+                        if (!p) return;
+                        
+                        let devSet = mappingsMap[pid];
+                        let devList = Array.from(devSet);
+                        
+                        // Find companion products that share at least one device model
+                        let companionsMap = {};
+                        devList.forEach(dev => {
+                            let companions = deviceToProductsMap[dev] || [];
+                            companions.forEach(c => {
+                                if (c.id !== p.id) {
+                                    companionsMap[c.id] = c;
+                                }
+                            });
+                        });
+                        
+                        compData.push({
+                            id: p.id,
+                            name: p.name,
+                            category: p.category,
+                            product_model: p.product_model,
+                            compat_count: devList.length,
+                            compat_devices: devList.join(", "),
+                            original_string: metaMap[p.id] || p.label_compatible_model || "-",
+                            companions: Object.values(companionsMap)
+                        });
+                    });
+                    
+                    rawData = compData;
+                    filteredData = [...compData];
+                    
+                    document.getElementById("db-search").value = "";
+                    renderTable();
+                } catch (err) {
+                    showToast("Yükleme Hatası", err.message, "error");
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="100" class="no-data-info">
+                                <i class="fa-solid fa-triangle-exclamation no-data-icon" style="color: var(--color-red);"></i>
+                                <strong>Uyumluluk Verisi Yüklenemedi</strong>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">${err.message}</div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                return;
+            }
+            
+            if (tableName === 'all_compatibilities') {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="100" style="text-align: center; padding: 3rem;">
+                            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--color-blue); margin-bottom: 0.5rem;"></i>
+                            <div style="color: var(--text-secondary);">Tüm Ürünler ve Cihaz Uyumluluk verileri birleştiriliyor...</div>
+                        </td>
+                    </tr>
+                `;
+                
+                try {
+                    const [respProducts, respMappings, respShadow, respMeta] = await Promise.all([
+                        fetch('/api/db-raw?table=products'),
+                        fetch('/api/db-raw?table=product_device_mappings'),
+                        fetch('/api/db-raw?table=shadow_product_compatibilities'),
+                        fetch('/api/db-raw?table=shadow_compatibility_metadata')
+                    ]);
+                    
+                    const products = await respProducts.json();
+                    const mappings = await respMappings.json();
+                    const shadow = await respShadow.json();
+                    const meta = await respMeta.json();
+                    
+                    if (products.error || mappings.error || shadow.error || meta.error) {
+                        throw new Error(products.error || mappings.error || shadow.error || meta.error);
+                    }
+                    
+                    // Build database mappings map
+                    let mappingsMap = {};
+                    mappings.forEach(m => {
+                        if (!m.product_id) return;
+                        if (!mappingsMap[m.product_id]) {
+                            mappingsMap[m.product_id] = new Set();
+                        }
+                        if (m.device_model) {
+                            mappingsMap[m.product_id].add(m.device_model);
+                        }
+                    });
+                    
+                    shadow.forEach(s => {
+                        if (!s.product_id) return;
+                        if (!mappingsMap[s.product_id]) {
+                            mappingsMap[s.product_id] = new Set();
+                        }
+                        if (s.normalized_model) {
+                            mappingsMap[s.product_id].add(s.normalized_model);
+                        }
+                    });
+                    
+                    // Fallback to client-side parsing for ALL products that don't have db mappings
+                    products.forEach(p => {
+                        if (!mappingsMap[p.id] || mappingsMap[p.id].size === 0) {
+                            let parsed = jsParseCompatibility(p.product_model, p.label_compatible_model);
+                            if (parsed.length > 0) {
+                                mappingsMap[p.id] = new Set(parsed);
+                            }
+                        }
+                    });
+                    
+                    // Build metadata map
+                    let metaMap = {};
+                    meta.forEach(m => {
+                        if (m.product_id && m.original_string) {
+                            metaMap[m.product_id] = m.original_string;
+                        }
+                    });
+                    
+                    // Build a map of device_model -> Array of product info
+                    let deviceToProductsMap = {};
+                    products.forEach(p => {
+                        let devSet = mappingsMap[p.id] || new Set();
+                        devSet.forEach(dev => {
+                            if (!deviceToProductsMap[dev]) {
+                                deviceToProductsMap[dev] = [];
+                            }
+                            deviceToProductsMap[dev].push({
+                                id: p.id,
+                                name: p.name,
+                                category: p.category,
+                                model: p.product_model
+                            });
+                        });
+                    });
+                    
+                    // Synthesize the compatibilities list for ALL products
+                    let compData = products.map(p => {
+                        let devSet = mappingsMap[p.id] || new Set();
+                        let devList = Array.from(devSet);
+                        
+                        // Find companion products that share at least one device model
+                        let companionsMap = {};
+                        devList.forEach(dev => {
+                            let companions = deviceToProductsMap[dev] || [];
+                            companions.forEach(c => {
+                                if (c.id !== p.id) {
+                                    companionsMap[c.id] = c;
+                                }
+                            });
+                        });
+                        
+                        return {
+                            id: p.id,
+                            name: p.name,
+                            category: p.category,
+                            product_model: p.product_model,
+                            compat_count: devList.length,
+                            compat_devices: devList.join(", "),
+                            original_string: metaMap[p.id] || p.label_compatible_model || "-",
+                            companions: Object.values(companionsMap)
+                        };
+                    });
+                    
+                    rawData = compData;
+                    filteredData = [...compData];
+                    
+                    document.getElementById("db-search").value = "";
+                    renderTable();
+                } catch (err) {
+                    showToast("Yükleme Hatası", err.message, "error");
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="100" class="no-data-info">
+                                <i class="fa-solid fa-triangle-exclamation no-data-icon" style="color: var(--color-red);"></i>
+                                <strong>Uyumluluk Verisi Yüklenemedi</strong>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">${err.message}</div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                return;
+            }
+            
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="100" style="text-align: center; padding: 3rem;">
+                        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--color-blue); margin-bottom: 0.5rem;"></i>
+                        <div style="color: var(--text-secondary);">Veri tabanından ${tableName} tablosu çekiliyor...</div>
+                    </td>
+                </tr>
+            `;
+            
+            try {
+                const response = await fetch(`/api/db-raw?table=${tableName}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    showToast("Bağlantı Hatası", data.error, "error");
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="100" class="no-data-info">
+                                <i class="fa-solid fa-triangle-exclamation no-data-icon" style="color: var(--color-red);"></i>
+                                <strong>Tablo Yüklenemedi</strong>
+                                <div style="font-size: 0.8rem; opacity: 0.8;">${data.error}</div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                rawData = data;
+                filteredData = [...data];
+                
+                document.getElementById("db-search").value = "";
+                selectedCategory = 'ALL';
+                
+                // Dynamically populate category quick filters if the table has a category column
+                let catKey = null;
+                if (data.length > 0) {
+                    if ('category' in data[0]) {
+                        catKey = 'category';
+                    } else if ('category_name' in data[0]) {
+                        catKey = 'category_name';
+                    }
+                }
+                
+                const filterContainer = document.getElementById("quick-category-filters");
+                if (catKey) {
+                    filterContainer.style.display = 'flex';
+                    
+                    const categoryCounts = {};
+                    rawData.forEach(row => {
+                        let cat = row[catKey];
+                        if (cat === null || cat === undefined || cat === "" || cat === "null") {
+                            cat = "(Kategorisiz)";
+                        }
+                        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                    });
+                    
+                    let badgesHtml = `<button class="category-filter-badge active" data-category="ALL" onclick="filterByCategory('ALL')"><i class="fa-solid fa-list"></i> Tümü (${rawData.length})</button>`;
+                    
+                    const sortedCats = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
+                    sortedCats.forEach(cat => {
+                        badgesHtml += `<button class="category-filter-badge" data-category="${escapeHtml(cat)}" onclick="filterByCategory(this.getAttribute('data-category'))">${escapeHtml(cat)} <span style="opacity: 0.7; font-size: 0.72rem; font-weight: 500;">(${categoryCounts[cat]})</span></button>`;
+                    });
+                    
+                    filterContainer.innerHTML = badgesHtml;
+                } else {
+                    filterContainer.style.display = 'none';
+                    filterContainer.innerHTML = '';
+                }
+                
+                renderTable();
+            } catch (err) {
+                console.error("Fetch table error:", err);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="100" class="no-data-info">
+                            <i class="fa-solid fa-triangle-exclamation no-data-icon" style="color: var(--color-red);"></i>
+                            <strong>Bağlantı Hatası</strong>
+                            <div style="font-size: 0.8rem; opacity: 0.8;">Sunucu bağlantısı kurulamadı.</div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderTable() {
+            if (currentTable === 'compatibilities' || currentTable === 'all_compatibilities') {
+                renderCompatibilitiesTable();
+                return;
+            }
+            if (currentTable === 'device_generations') {
+                renderDeviceGenerationsTable();
+                return;
+            }
+            const tableHeaders = document.getElementById("table-headers");
+            const tableBody = document.getElementById("table-body");
+            
+            tableHeaders.innerHTML = "";
+            tableBody.innerHTML = "";
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="100" class="no-data-info">
+                            <i class="fa-solid fa-magnifying-glass no-data-icon"></i>
+                            <strong>Eşleşen Kayıt Bulunamadı</strong>
+                            <div style="font-size: 0.8rem;">Arama kriterlerine uygun depo veya sipariş kaydı mevcut değil.</div>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById("pagination-info-el").innerText = "Gösterilen Kayıt: 0 / Toplam: 0";
+                document.getElementById("pagination-controls-el").innerHTML = "";
+                return;
+            }
+            
+            // Get all unique columns from data
+            const columns = [];
+            filteredData.forEach(row => {
+                Object.keys(row).forEach(col => {
+                    if (!columns.includes(col)) {
+                        columns.push(col);
+                    }
+                });
+            });
+            
+            // Calculate populated weight (density) for each column in active data
+            const colWeights = {};
+            columns.forEach(col => {
+                let count = 0;
+                filteredData.forEach(row => {
+                    const val = row[col];
+                    if (val !== null && val !== undefined && val !== "" && val !== "null") {
+                        count++;
+                    }
+                });
+                colWeights[col] = count;
+            });
+            
+            // Re-order columns based on populated weight, falling back to priority list
+            columns.sort((a, b) => {
+                const weightDiff = colWeights[b] - colWeights[a]; // b - a for descending (more populated first)
+                if (weightDiff !== 0) {
+                    return weightDiff;
+                }
+                
+                // If weights are equal, fallback to standard priority ordering
+                const prioritized = ["id", "order_number", "barcode", "name", "title", "product_name", "category", "price", "total_price", "marketplace", "status"];
+                const idxA = prioritized.indexOf(a);
+                const idxB = prioritized.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                
+                return a.localeCompare(b);
+            });
+            
+            // Append Action column
+            const hasJsonField = columns.some(c => ["raw_data", "attributes", "images", "base_attributes", "variant_type_attributes", "product_attributes", "validation_results"].includes(c));
+            
+            // Render Headers
+            columns.forEach(col => {
+                let colLabel = col.replace(/_/g, " ");
+                tableHeaders.innerHTML += `<th title="${col}">${colLabel}</th>`;
+            });
+            if (hasJsonField) {
+                tableHeaders.innerHTML += `<th>EYLEMLER</th>`;
+            }
+            
+            // Paginate
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            // Render Body
+            pageData.forEach(row => {
+                let trHtml = "";
+                if (currentTable === 'products') {
+                    trHtml += `<tr class="product-row" onclick="toggleProductMappings('${row.id}', this)" title="Trendyol / Hepsiburada eşleşmelerini görmek için tıklayın">`;
+                } else {
+                    trHtml += "<tr>";
+                }
+                
+                columns.forEach(col => {
+                    const val = row[col];
+                    
+                    if (val === null || val === undefined) {
+                        trHtml += `<td><span class="db-cell-badge null">null</span></td>`;
+                    } else if (typeof val === 'object') {
+                        trHtml += `<td title='JSON verisi'>[Nesne]</td>`;
+                    } else {
+                        const valStr = String(val);
+                        // Highlight key status values
+                        if (col === 'status_color') {
+                            let colorHex = valStr === 'red' ? 'var(--color-red)' : valStr === 'orange' ? 'var(--color-orange)' : 'var(--color-green)';
+                            trHtml += `<td><span style="color: ${colorHex}; font-weight: 700;">● ${valStr.toUpperCase()}</span></td>`;
+                        } else if (col === 'marketplace') {
+                            let badgeStyle = valStr === 'Trendyol' ? 'background: rgba(249, 115, 22, 0.15); color: #f97316;' : 'background: rgba(59, 130, 246, 0.15); color: #3b82f6;';
+                            trHtml += `<td><span style="${badgeStyle} font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 4px;">${valStr}</span></td>`;
+                        } else if (col === 'hedef_kolon') {
+                            trHtml += `<td><span class="db-cell-badge id" style="background: rgba(139, 92, 246, 0.12); color: var(--color-purple); font-family: monospace; font-size: 0.76rem; font-weight: 700;" title="${valStr}">${valStr}</span></td>`;
+                        } else if (col === 'veri_tipi') {
+                            trHtml += `<td><span class="db-cell-badge number" style="background: rgba(59, 130, 246, 0.1); color: var(--color-blue); font-family: monospace; font-size: 0.72rem; font-weight: 600;" title="${valStr}">${valStr}</span></td>`;
+                        } else if (col === 'kaynak_tablo') {
+                            let badgeStyle = valStr.includes('trendyol') ? 'background: rgba(249, 115, 22, 0.1); color: #c2410c;' : valStr.includes('hepsiburada') ? 'background: rgba(59, 130, 246, 0.1); color: #1d4ed8;' : 'background: rgba(139, 92, 246, 0.1); color: var(--color-purple);';
+                            if (valStr.includes('Konsolide')) badgeStyle = 'background: rgba(16, 185, 129, 0.1); color: var(--color-green);';
+                            trHtml += `<td><span style="${badgeStyle} font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 6px;">${valStr}</span></td>`;
+                        } else if (col === 'kaynak_kolon') {
+                            trHtml += `<td><span class="db-cell-badge null" style="background: rgba(100, 116, 139, 0.1); color: #64748b; font-family: monospace; font-size: 0.72rem;" title="${valStr}">${valStr}</span></td>`;
+                        } else if (col === 'id' || col === 'order_number' || col === 'barcode') {
+                            trHtml += `<td><span class="db-cell-badge id" title="${valStr}">${valStr}</span></td>`;
+                        } else if (typeof val === 'number') {
+                            trHtml += `<td><span class="db-cell-badge number">${valStr}</span></td>`;
+                        } else {
+                            trHtml += `<td title="${valStr}">${valStr}</td>`;
+                        }
+                    }
+                });
+                
+                if (hasJsonField) {
+                    // Find first populated JSON field
+                    let targetVal = null;
+                    let targetField = "";
+                    for (let f of ["raw_data", "attributes", "images", "base_attributes", "variant_type_attributes", "product_attributes", "validation_results"]) {
+                        if (row[f]) {
+                            targetVal = row[f];
+                            targetField = f;
+                            break;
+                        }
+                    }
+                    if (targetVal) {
+                        trHtml += `<td>
+                            <button class="btn-view-json" onclick="event.stopPropagation(); openJsonModal('${escapeHtml(targetField)}', ${escapeJsString(targetVal)})">
+                                <i class="fa-solid fa-code"></i> İncele
+                            </button>
+                        </td>`;
+                    } else {
+                        trHtml += `<td>-</td>`;
+                    }
+                }
+                
+                trHtml += "</tr>";
+                
+                if (currentTable === 'products') {
+                    trHtml += `
+                    <tr id="mappings-${row.id}" class="mapping-collapsible-row" style="display: none; background: rgba(15, 23, 42, 0.01);">
+                        <td colspan="100" style="padding: 0; border-bottom: 1px solid var(--border-color);">
+                            <div class="mappings-container-wrapper" style="max-height: 0; overflow: hidden; padding: 0 1.5rem;">
+                                <div class="mappings-loading" style="padding: 2rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
+                                    <i class="fa-solid fa-spinner fa-spin" style="color: var(--color-blue); margin-right: 0.5rem; font-size: 1rem;"></i>
+                                    Entegrasyon Eşleşmeleri Yükleniyor...
+                                </div>
+                                <div class="mappings-content" style="display: none; padding: 1.5rem 0;">
+                                    <!-- Dynamic content loaded via API -->
+                                </div>
+                            </div>
+                        </td>
+                    </tr>`;
+                }
+                
+                tableBody.innerHTML += trHtml;
+            });
+            
+            // Pagination controls
+            document.getElementById("pagination-info-el").innerText = `Gösterilen Kayıt: ${startIndex + 1} - ${endIndex} / Toplam: ${filteredData.length}`;
+            
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            const controls = document.getElementById("pagination-controls-el");
+            controls.innerHTML = "";
+            
+            // Prev button
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "page-btn";
+            prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => { currentPage--; renderTable(); };
+            controls.appendChild(prevBtn);
+            
+            // Render numbered buttons
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement("button");
+                btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                btn.innerText = i;
+                btn.onclick = () => { currentPage = i; renderTable(); };
+                controls.appendChild(btn);
+            }
+            
+            // Next button
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "page-btn";
+            nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => { currentPage++; renderTable(); };
+            controls.appendChild(nextBtn);
+        }
+
+        function handleSearch() {
+            currentPage = 1;
+            applyAllFilters();
+        }
+
+        function filterByCategory(cat) {
+            selectedCategory = cat;
+            
+            const filterContainer = document.getElementById("quick-category-filters");
+            if (filterContainer) {
+                const badges = filterContainer.querySelectorAll(".category-filter-badge");
+                badges.forEach(badge => {
+                    if (badge.getAttribute("data-category") === cat) {
+                        badge.classList.add("active");
+                    } else {
+                        badge.classList.remove("active");
+                    }
+                });
+            }
+            
+            currentPage = 1;
+            applyAllFilters();
+        }
+
+        function applyAllFilters() {
+            const query = document.getElementById("db-search").value.toLowerCase().trim();
+            
+            // Detect active category key
+            let catKey = null;
+            if (rawData.length > 0) {
+                if ('category' in rawData[0]) {
+                    catKey = 'category';
+                } else if ('category_name' in rawData[0]) {
+                    catKey = 'category_name';
+                }
+            }
+            
+            let filtered = [...rawData];
+            
+            // 1. Filter by category
+            if (catKey && selectedCategory && selectedCategory !== 'ALL') {
+                filtered = filtered.filter(row => {
+                    let rowCat = row[catKey];
+                    if (rowCat === null || rowCat === undefined || rowCat === "" || rowCat === "null") {
+                        rowCat = "(Kategorisiz)";
+                    }
+                    return rowCat === selectedCategory;
+                });
+            }
+            
+            // 2. Filter by search input query text
+            if (query) {
+                filtered = filtered.filter(row => {
+                    return Object.values(row).some(val => {
+                        if (val === null || val === undefined) return false;
+                        if (typeof val === 'object') return false;
+                        return String(val).toLowerCase().includes(query);
+                    });
+                });
+            }
+            
+            filteredData = filtered;
+            renderTable();
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function escapeJsString(obj) {
+            // Stringify and escape for safe Javascript function call argument pass
+            let str = typeof obj === 'string' ? obj : JSON.stringify(obj);
+            return JSON.stringify(str);
+        }
+
+        function openJsonModal(fieldName, jsonStr) {
+            const modal = document.getElementById("json-modal");
+            const modalTitle = document.getElementById("json-modal-title");
+            const content = document.getElementById("pretty-json-content");
+            
+            modalTitle.innerHTML = `<i class="fa-solid fa-code"></i> JSON Detayı (${fieldName})`;
+            
+            try {
+                // Parse it if it is JSON string
+                let parsed = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
+                content.innerText = JSON.stringify(parsed, null, 4);
+            } catch (e) {
+                content.innerText = jsonStr;
+            }
+            
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.querySelector(".modal-content").style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        function closeJsonModal(e = null) {
+            const modal = document.getElementById("json-modal");
+            modal.style.opacity = '0';
+            modal.querySelector(".modal-content").style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        function toggleCompatCompanions(productId, rowEl) {
+            const collapsibleRow = document.getElementById(`companions-${productId}`);
+            if (!collapsibleRow) return;
+            
+            const wrapper = collapsibleRow.querySelector('.mappings-container-wrapper');
+            const isExpanded = collapsibleRow.style.display !== 'none';
+            
+            // First, close any other expanded mapping rows to keep the UI clean
+            document.querySelectorAll('.mapping-collapsible-row').forEach(row => {
+                if (row.id !== `companions-${productId}`) {
+                    row.style.display = 'none';
+                    const w = row.querySelector('.mappings-container-wrapper');
+                    if (w) w.style.maxHeight = '0px';
+                    
+                    const siblingRow = row.previousElementSibling;
+                    if (siblingRow) siblingRow.classList.remove('expanded-parent');
+                }
+            });
+            
+            if (isExpanded) {
+                // Collapse
+                wrapper.style.maxHeight = '0px';
+                setTimeout(() => {
+                    collapsibleRow.style.display = 'none';
+                }, 350);
+                rowEl.classList.remove('expanded-parent');
+            } else {
+                // Expand
+                collapsibleRow.style.display = 'table-row';
+                rowEl.classList.add('expanded-parent');
+                
+                setTimeout(() => {
+                    wrapper.style.maxHeight = '1500px';
+                }, 10);
+            }
+        }
+        function renderCompatibilitiesTable() {
+            const tableHeaders = document.getElementById("table-headers");
+            const tableBody = document.getElementById("table-body");
+            
+            tableHeaders.innerHTML = "";
+            tableBody.innerHTML = "";
+            
+            // Render custom headers
+            tableHeaders.innerHTML = `
+                <th>Ürün ID</th>
+                <th>Ürün Adı</th>
+                <th>Kategori</th>
+                <th style="text-align: center;">Uyumlu Cihaz > 1</th>
+                <th style="text-align: center;">Uyumlu Cihaz <= 1</th>
+                <th>Orijinal Metin</th>
+                <th>Ayrıştırılmış Modeller</th>
+                <th>EYLEMLER</th>
+            `;
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="100" class="no-data-info">
+                            <i class="fa-solid fa-magnifying-glass no-data-icon"></i>
+                            <strong>Eşleşen Kayıt Bulunamadı</strong>
+                            <div style="font-size: 0.8rem;">Arama kriterlerine uygun uyumluluk kaydı mevcut değil.</div>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById("pagination-info-el").innerText = "Gösterilen Kayıt: 0 / Toplam: 0";
+                document.getElementById("pagination-controls-el").innerHTML = "";
+                return;
+            }
+            
+            // Paginate
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            pageData.forEach(row => {
+                let checkBadgeMore = row.compat_count > 1 
+                    ? `<span style="background: rgba(249, 115, 22, 0.12); color: var(--color-orange); border: 1px solid rgba(249, 115, 22, 0.25); font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-check"></i> Evet (${row.compat_count})</span>` 
+                    : `<span style="color: var(--text-muted); font-size: 0.85rem;">-</span>`;
+                
+                let checkBadgeLess = row.compat_count <= 1 
+                    ? `<span style="background: rgba(59, 130, 246, 0.1); color: var(--color-blue); border: 1px solid rgba(59, 130, 246, 0.15); font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-check"></i> Evet (${row.compat_count})</span>` 
+                    : `<span style="color: var(--text-muted); font-size: 0.85rem;">-</span>`;
+                
+                let trHtml = `
+                    <tr class="product-row" onclick="toggleCompatCompanions('${row.id}', this)" title="Uyumlu eşleşen diğer ürünleri görmek için tıklayın" style="cursor: pointer;">
+                        <td><span class="db-cell-badge id">${row.id}</span></td>
+                        <td><strong>${row.name}</strong></td>
+                        <td><span style="background: rgba(139, 92, 246, 0.08); color: var(--color-purple); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700; font-size: 0.7rem;">${row.category || 'KILIF'}</span></td>
+                        <td style="text-align: center;">${checkBadgeMore}</td>
+                        <td style="text-align: center;">${checkBadgeLess}</td>
+                        <td><span style="font-size: 0.78rem; color: var(--text-secondary); font-family: monospace;">${row.original_string}</span></td>
+                        <td><span style="font-size: 0.78rem; color: var(--text-primary); font-weight: 600;">${row.compat_devices || 'Uyumlu Cihaz Yok'}</span></td>
+                        <td>
+                            <button class="btn-view-json" style="background: var(--color-blue); border-color: var(--color-blue); color: white;" onclick="event.stopPropagation(); toggleCompatCompanions('${row.id}', this.closest('tr'))">
+                                <i class="fa-solid fa-eye"></i> İncele (${row.companions.length})
+                            </button>
+                        </td>
+                    </tr>
+                    <tr id="companions-${row.id}" class="mapping-collapsible-row" style="display: none; background: rgba(15, 23, 42, 0.01);">
+                        <td colspan="100" style="padding: 0; border-bottom: 1px solid var(--border-color);">
+                            <div class="mappings-container-wrapper" style="max-height: 0; overflow: hidden; padding: 0 1.5rem;">
+                                <div style="padding: 1.25rem 0;">
+                                    <div style="font-size: 0.78rem; font-weight: 800; color: var(--color-blue); text-transform: uppercase; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.35rem;">
+                                        <i class="fa-solid fa-handshake-angle"></i> Birlikte Sipariş Edilebilir Uyumlu Eşleşen Ürünler (${row.companions.length})
+                                    </div>
+                                    ${row.companions.length === 0 ? `
+                                        <div style="font-size: 0.75rem; color: var(--text-muted); padding: 0.5rem 0;">Ortak cihaz modeli paylaşan başka bir ürün bulunamadı.</div>
+                                    ` : `
+                                        <div style="display: flex; flex-wrap: wrap; gap: 0.65rem;">
+                                            ${row.companions.map(c => `
+                                                <div style="background: white; border: 1px solid var(--border-color); padding: 0.6rem 0.85rem; border-radius: 8px; flex: 1 1 200px; min-width: 200px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; gap: 0.2rem;">
+                                                    <span style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--color-purple);">${c.category}</span>
+                                                    <strong style="font-size: 0.78rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${c.name}">${c.name}</strong>
+                                                    <span style="font-size: 0.7rem; color: var(--text-secondary); font-family: monospace;">Model: ${c.model}</span>
+                                                    <span style="font-size: 0.65rem; color: var(--text-muted); font-family: monospace;">ID: ${c.id}</span>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                    `}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += trHtml;
+            });
+            
+            // Set pagination text info
+            document.getElementById("pagination-info-el").innerText = `Gösterilen Kayıt: ${startIndex + 1} - ${endIndex} / Toplam: ${filteredData.length}`;
+            
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            const controls = document.getElementById("pagination-controls-el");
+            controls.innerHTML = "";
+            
+            // Prev button
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "page-btn";
+            prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => { currentPage--; renderTable(); };
+            controls.appendChild(prevBtn);
+            
+            // Render numbered buttons
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i < 1 || i > totalPages) continue;
+                const btn = document.createElement("button");
+                btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                btn.innerText = i;
+                btn.onclick = () => { currentPage = i; renderTable(); };
+                controls.appendChild(btn);
+            }
+            
+            // Next button
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "page-btn";
+            nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+            nextBtn.onclick = () => { currentPage++; renderTable(); };
+            controls.appendChild(nextBtn);
+        }
+        async function toggleProductMappings(productId, rowEl) {
+            const collapsibleRow = document.getElementById(`mappings-${productId}`);
+            if (!collapsibleRow) return;
+            
+            const wrapper = collapsibleRow.querySelector('.mappings-container-wrapper');
+            const content = collapsibleRow.querySelector('.mappings-content');
+            const loading = collapsibleRow.querySelector('.mappings-loading');
+            
+            const isExpanded = collapsibleRow.style.display !== 'none';
+            
+            // First, close any other expanded mapping rows to keep the UI clean
+            document.querySelectorAll('.mapping-collapsible-row').forEach(row => {
+                if (row.id !== `mappings-${productId}`) {
+                    row.style.display = 'none';
+                    const w = row.querySelector('.mappings-container-wrapper');
+                    if (w) w.style.maxHeight = '0px';
+                    
+                    // Remove active style from sibling rows
+                    const siblingRow = row.previousElementSibling;
+                    if (siblingRow) siblingRow.classList.remove('expanded-parent');
+                }
+            });
+            
+            if (isExpanded) {
+                // Collapse
+                wrapper.style.maxHeight = '0px';
+                // Wait for transition to complete before display: none
+                setTimeout(() => {
+                    collapsibleRow.style.display = 'none';
+                }, 350);
+                rowEl.classList.remove('expanded-parent');
+            } else {
+                // Expand
+                collapsibleRow.style.display = 'table-row';
+                rowEl.classList.add('expanded-parent');
+                
+                // Fetch mappings if not already loaded or reload
+                loading.style.display = 'block';
+                content.style.display = 'none';
+                
+                // Set small delay to trigger CSS transition smoothly
+                setTimeout(() => {
+                    wrapper.style.maxHeight = '400px'; // Temporary placeholder height for transition
+                }, 10);
+                
+                try {
+                    const res = await fetch(`/api/product-mappings?product_id=${productId}`);
+                    const data = await res.json();
+                    
+                    if (data.error) {
+                        loading.innerHTML = `<span style="color: var(--color-red); font-weight: 500;"><i class="fa-solid fa-triangle-exclamation"></i> Hata: ${data.error}</span>`;
+                        return;
+                    }
+                    
+                    // Render mappings
+                    renderMappingsHtml(content, data);
+                    
+                    loading.style.display = 'none';
+                    content.style.display = 'block';
+                    
+                    // Adjust height to fit new content perfectly
+                    setTimeout(() => {
+                        wrapper.style.maxHeight = (content.scrollHeight + 40) + 'px';
+                    }, 50);
+                } catch (err) {
+                    loading.innerHTML = `<span style="color: var(--color-red); font-weight: 500;"><i class="fa-solid fa-triangle-exclamation"></i> Bağlantı Hatası</span>`;
+                }
+            }
+        }
+
+        function renderMappingsHtml(container, data) {
+            const { trendyol, hepsiburada } = data;
+            
+            const hasTrendyol = trendyol && trendyol.length > 0;
+            const hasHepsiburada = hepsiburada && hepsiburada.length > 0;
+            
+            // If both are empty, render a single clean empty card
+            if (!hasTrendyol && !hasHepsiburada) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2.5rem; color: var(--text-secondary); background: rgba(255, 255, 255, 0.4); border-radius: 12px; border: 1px dashed var(--border-color); margin: 0.5rem 0; width: 100%;">
+                        <i class="fa-solid fa-ban" style="display: block; font-size: 1.6rem; color: var(--text-secondary); opacity: 0.4; margin-bottom: 0.75rem;"></i>
+                        <strong style="display: block; margin-bottom: 0.25rem; font-family: 'Outfit', sans-serif; color: var(--text-primary);">Aktif Entegrasyon Eşleşmesi Bulunmuyor</strong>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">Bu ürün kartı için Trendyol veya Hepsiburada üzerinde tanımlanmış aktif bir entegrasyon kaydı bulunmamaktadır.</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Trendyol cards
+            let tyListHtml = '';
+            if (hasTrendyol) {
+                trendyol.forEach(m => {
+                    tyListHtml += `
+                        <div class="mapping-item-card" style="background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(249, 115, 22, 0.15); border-radius: 10px; padding: 0.85rem; margin-bottom: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 0.5rem; transition: all 0.2s ease;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.82rem; line-height: 1.4; word-break: break-word;">
+                                ${m.title || '-'}
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
+                                <span class="db-cell-badge id" style="font-size: 0.65rem; padding: 0.12rem 0.4rem;" title="${m.id}">ID: ${m.id}</span>
+                                <span class="db-cell-badge id" style="font-size: 0.65rem; padding: 0.12rem 0.4rem; background: rgba(59, 130, 246, 0.1); color: var(--color-blue);" title="${m.product_id}">ÜRÜN-ID: ${m.product_id}</span>
+                                <span style="font-size: 0.68rem; font-weight: 600; background: rgba(249, 115, 22, 0.08); color: #c2410c; padding: 0.12rem 0.4rem; border-radius: 4px; font-family: monospace;">BARKOD: ${m.barcode || '-'}</span>
+                                <span style="font-size: 0.68rem; font-weight: 600; background: rgba(15, 23, 42, 0.05); color: var(--text-secondary); padding: 0.12rem 0.4rem; border-radius: 4px;">MARKA: ${m.brand || '-'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            // Hepsiburada cards
+            let hbListHtml = '';
+            if (hasHepsiburada) {
+                hepsiburada.forEach(m => {
+                    hbListHtml += `
+                        <div class="mapping-item-card" style="background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 10px; padding: 0.85rem; margin-bottom: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.01); display: flex; flex-direction: column; gap: 0.5rem; transition: all 0.2s ease;">
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 0.82rem; line-height: 1.4; word-break: break-word;">
+                                ${m.title || '-'}
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center;">
+                                <span class="db-cell-badge id" style="font-size: 0.65rem; padding: 0.12rem 0.4rem;" title="${m.id}">ID: ${m.id}</span>
+                                <span class="db-cell-badge id" style="font-size: 0.65rem; padding: 0.12rem 0.4rem; background: rgba(59, 130, 246, 0.1); color: var(--color-blue);" title="${m.product_id}">ÜRÜN-ID: ${m.product_id}</span>
+                                <span style="font-size: 0.68rem; font-weight: 600; background: rgba(59, 130, 246, 0.08); color: #1d4ed8; padding: 0.12rem 0.4rem; border-radius: 4px; font-family: monospace;">BARKOD: ${m.barcode || '-'}</span>
+                                <span style="font-size: 0.68rem; font-weight: 600; background: rgba(15, 23, 42, 0.05); color: var(--text-secondary); padding: 0.12rem 0.4rem; border-radius: 4px;">MARKA: ${m.brand || '-'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            let columnsHtml = '';
+            if (hasTrendyol) {
+                columnsHtml += `
+                    <!-- Trendyol Column -->
+                    <div class="mapping-column trendyol-col" style="flex: 1; min-width: 320px; background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(249, 115, 22, 0.15); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 20px rgba(249, 115, 22, 0.02); transition: all 0.3s ease;">
+                        <div class="mapping-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(249, 115, 22, 0.12); padding-bottom: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="background: var(--color-orange); color: white; width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);">T</span>
+                                <span style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #c2410c; font-size: 0.95rem;">Trendyol Entegrasyonu</span>
+                            </div>
+                            <span class="mapping-count-badge" style="background: rgba(249, 115, 22, 0.1); color: #c2410c; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 700; font-size: 0.72rem;">${trendyol.length} Eşleşme</span>
+                        </div>
+                        
+                        <div class="mapping-list-container">
+                            ${tyListHtml}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (hasHepsiburada) {
+                columnsHtml += `
+                    <!-- Hepsiburada Column -->
+                    <div class="mapping-column hepsiburada-col" style="flex: 1; min-width: 320px; background: rgba(255, 255, 255, 0.65); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.02); transition: all 0.3s ease;">
+                        <div class="mapping-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(59, 130, 246, 0.12); padding-bottom: 0.75rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="background: var(--color-blue); color: white; width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);">H</span>
+                                <span style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #1d4ed8; font-size: 0.95rem;">Hepsiburada Entegrasyonu</span>
+                            </div>
+                            <span class="mapping-count-badge" style="background: rgba(59, 130, 246, 0.1); color: #1d4ed8; padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 700; font-size: 0.72rem;">${hepsiburada.length} Eşleşme</span>
+                        </div>
+                        
+                        <div class="mapping-list-container">
+                            ${hbListHtml}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = `
+                <div class="mappings-wrapper" style="display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: space-between; width: 100%;">
+                    ${columnsHtml}
+                </div>
+            `;
+        }
+
+        function showToast(title, desc, type) {
+            const toast = document.createElement("div");
+            toast.className = "toast-notification";
+            toast.style.borderLeftColor = type === 'error' ? 'var(--color-red)' : 'var(--color-blue)';
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-check'}" style="color: ${type === 'error' ? 'var(--color-red)' : 'var(--color-blue)'}; font-size: 1.2rem;"></i>
+                <div>
+                    <strong style="display: block; font-size: 0.88rem;">${title}</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">${desc}</span>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = "slideUp 0.3s ease reverse forwards";
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        let activeTooltipText = "";
+
+        function showCustomTooltip(targetEl, text, event) {
+            let tooltip = document.getElementById("custom-cell-tooltip");
+            if (!tooltip) {
+                // Create tooltip dynamically if not exists
+                tooltip = document.createElement("div");
+                tooltip.id = "custom-cell-tooltip";
+                tooltip.style.cssText = "display: none; position: absolute; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.85rem 1.1rem; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12); z-index: 1000; max-width: 400px; font-size: 0.82rem; word-break: break-all; transition: opacity 0.15s ease; pointer-events: auto;";
+                document.body.appendChild(tooltip);
+            }
+            
+            activeTooltipText = text;
+            tooltip.innerHTML = `
+                <div class="tooltip-text" style="color: var(--text-primary); margin-bottom: 0.65rem; line-height: 1.4; font-family: 'Inter', sans-serif;">${escapeHtml(text)}</div>
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 0.5rem;">
+                    <button onclick="copyTooltipText()" class="tooltip-btn-copy" style="background: rgba(59, 130, 246, 0.1); color: var(--color-blue); border: none; padding: 0.3rem 0.6rem; border-radius: 5px; font-weight: 600; font-size: 0.72rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; transition: all 0.2s ease;"><i class="fa-regular fa-copy"></i> Kopyala</button>
+                    <button onclick="closeCustomTooltip()" style="background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); padding: 0.3rem 0.6rem; border-radius: 5px; font-weight: 500; font-size: 0.72rem; cursor: pointer; transition: all 0.2s ease;">Kapat</button>
+                </div>
+            `;
+            
+            // Position tooltip dynamically near mouse click coordinates
+            tooltip.style.display = 'block';
+            tooltip.style.opacity = '0';
+            
+            // Calculate coordinates
+            const scrollX = window.scrollX || window.pageXOffset;
+            const scrollY = window.scrollY || window.pageYOffset;
+            
+            let posX = event.clientX + scrollX + 10;
+            let posY = event.clientY + scrollY + 10;
+            
+            // Keep tooltip within screen boundaries
+            const tooltipWidth = tooltip.offsetWidth || 300;
+            if (event.clientX + tooltipWidth > window.innerWidth) {
+                posX = event.clientX + scrollX - tooltipWidth - 10;
+            }
+            
+            tooltip.style.left = posX + 'px';
+            tooltip.style.top = posY + 'px';
+            
+            setTimeout(() => {
+                tooltip.style.opacity = '1';
+            }, 10);
+        }
+
+        function closeCustomTooltip() {
+            const tooltip = document.getElementById("custom-cell-tooltip");
+            if (tooltip) {
+                tooltip.style.opacity = '0';
+                setTimeout(() => {
+                    tooltip.style.display = 'none';
+                }, 150);
+            }
+        }
+
+        function copyTooltipText() {
+            if (activeTooltipText) {
+                navigator.clipboard.writeText(activeTooltipText).then(() => {
+                    // Temporarily change button state to show copied feedback
+                    const btn = document.querySelector(".tooltip-btn-copy");
+                    if (btn) {
+                        const origHtml = btn.innerHTML;
+                        btn.innerHTML = `<i class="fa-solid fa-check"></i> Kopyalandı!`;
+                        btn.style.background = "rgba(16, 185, 129, 0.15)";
+                        btn.style.color = "var(--color-green)";
+                        setTimeout(() => {
+                            btn.innerHTML = origHtml;
+                            btn.style.background = "rgba(59, 130, 246, 0.1)";
+                            btn.style.color = "var(--color-blue)";
+                        }, 1500);
+                    }
+                }).catch(() => {
+                    showToast("Hata", "Kopyalama başarısız oldu.", "error");
+                });
+            }
+        }
+
+        // --- EXCEL PRODUCT IMPORT WIZARD CONTROLLER ---
+        let importWizardStep = 1;
+        let parsedHeaders = [];
+        let parsedRows = [];
+        let mappedData = [];
+        let importFileName = "";
+
+        const TARGET_FIELDS = [
+            { id: "barcode", label: "Barkod No*", required: true, autoMatches: ["barkod", "barkodno", "barcode", "upc", "ean", "barkod no", "barkod numara"] },
+            { id: "name", label: "Ürün Adı*", required: true, autoMatches: ["ürün adı", "urun adi", "adı", "isim", "name", "title", "ürün ismi", "urun ismi"] },
+            { id: "category", label: "Kategori", required: false, autoMatches: ["kategori", "category", "grup", "kategorisi"] },
+            { id: "model_code", label: "Model Kodu", required: false, autoMatches: ["model kodu", "model_code", "kod", "modelkodu"] },
+            { id: "color", label: "Renk", required: false, autoMatches: ["renk", "color", "rengi"] },
+            { id: "stock_quantity", label: "Stok Miktarı", required: false, autoMatches: ["stok", "adet", "miktar", "stock", "quantity", "qty", "stok adeti", "stok miktari"] },
+            { id: "purchase_price_rmb", label: "Alış Fiyatı (RMB)", required: false, autoMatches: ["alış fiyatı", "alis fiyati", "fiyat", "rmb", "price", "alis", "purchase price"] },
+            { id: "cost", label: "Maliyet (TL)", required: false, autoMatches: ["maliyet", "cost", "tutar", "maliyeti"] },
+            { id: "product_model", label: "Ürün Modeli (Cihaz)", required: false, autoMatches: ["ürün modeli", "urun modeli", "model", "device", "cihaz modeli", "cihaz"] },
+            { id: "label_compatible_model", label: "Etiket Uyumlu Model", required: false, autoMatches: ["etiket uyumlu model", "label_compatible_model", "etiket modeli", "label model", "compatible model", "label_compatible"] },
+            { id: "label_name", label: "Etiket Adı", required: false, autoMatches: ["etiket adı", "etiket adi", "label_name", "label name"] },
+            { id: "box_no", label: "Kutu No", required: false, autoMatches: ["kutu no", "kutu numarası", "box_no", "box no"] },
+            { id: "supplier_name", label: "Tedarikçi Adı", required: false, autoMatches: ["tedarikçi", "tedarikci", "supplier", "tedarikçi adı", "toptancı"] }
+        ];
+
+        function openImportWizard() {
+            importWizardStep = 1;
+            parsedHeaders = [];
+            parsedRows = [];
+            mappedData = [];
+            importFileName = "";
+            
+            document.getElementById("excel-file-input").value = "";
+            
+            // Show wizard overlay
+            const modal = document.getElementById("import-wizard-modal");
+            modal.style.display = "flex";
+            setTimeout(() => {
+                modal.style.opacity = "1";
+                modal.querySelector(".modal-content").style.transform = "scale(1)";
+            }, 10);
+            
+            renderWizardStep();
+        }
+
+        function closeImportWizard(e = null) {
+            const modal = document.getElementById("import-wizard-modal");
+            modal.style.opacity = "0";
+            modal.querySelector(".modal-content").style.transform = "scale(0.95)";
+            setTimeout(() => {
+                modal.style.display = "none";
+            }, 300);
+        }
+
+        function renderWizardStep() {
+            // Toggle visibility of step contents
+            document.getElementById("wizard-step-1").style.display = importWizardStep === 1 ? "flex" : "none";
+            document.getElementById("wizard-step-2").style.display = importWizardStep === 2 ? "flex" : "none";
+            document.getElementById("wizard-step-3").style.display = importWizardStep === 3 ? "flex" : "none";
+            
+            // Step Indicators active class
+            for (let i = 1; i <= 3; i++) {
+                const indicator = document.getElementById(`step-indicator-${i}`);
+                if (indicator) {
+                    if (i === importWizardStep) {
+                        indicator.style.color = "var(--color-blue)";
+                        indicator.style.opacity = "1";
+                        indicator.querySelector("span").style.background = "var(--color-blue)";
+                    } else if (i < importWizardStep) {
+                        indicator.style.color = "var(--color-green)";
+                        indicator.style.opacity = "1";
+                        indicator.querySelector("span").style.background = "var(--color-green)";
+                    } else {
+                        indicator.style.color = "var(--text-secondary)";
+                        indicator.style.opacity = "0.5";
+                        indicator.querySelector("span").style.background = "var(--text-secondary)";
+                    }
+                }
+            }
+            
+            // Control Button States
+            const backBtn = document.getElementById("wizard-btn-back");
+            const nextBtn = document.getElementById("wizard-btn-next");
+            const importBtn = document.getElementById("wizard-btn-import");
+            
+            backBtn.style.display = importWizardStep > 1 ? "inline-flex" : "none";
+            nextBtn.style.display = importWizardStep === 2 ? "inline-flex" : "none";
+            importBtn.style.display = importWizardStep === 3 ? "inline-flex" : "none";
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processExcelFile(file);
+            }
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                processExcelFile(file);
+            }
+        }
+
+        function processExcelFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext !== 'xlsx' && ext !== 'xls' && ext !== 'csv') {
+                showToast("Geçersiz Dosya Formatı", "Lütfen yalnızca Excel (.xlsx, .xls) veya CSV dosyası yükleyin.", "error");
+                return;
+            }
+            
+            importFileName = file.name;
+            showToast("Dosya Yükleniyor", "Lütfen bekleyin, Excel dosyası okunuyor...", "info");
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Parse as raw JSON list of rows
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                    
+                    if (!rows || rows.length === 0) {
+                        showToast("Dosya Boş", "Excel dosyasında herhangi bir ürün satırı bulunamadı.", "error");
+                        return;
+                    }
+                    
+                    parsedRows = rows;
+                    
+                    // Extract all column headers from the first row keys
+                    parsedHeaders = Object.keys(rows[0]);
+                    
+                    showToast("Dosya Başarıyla Yüklendi", `${rows.length} satır veri tespit edildi.`, "success");
+                    
+                    // Proceed to step 2 automatically
+                    importWizardStep = 2;
+                    renderWizardStep();
+                    renderMappingStep();
+                } catch (err) {
+                    console.error("Excel reading error:", err);
+                    showToast("Okuma Hatası", "Excel dosyası işlenirken bir hata oluştu.", "error");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderMappingStep() {
+            const tbody = document.getElementById("mapping-fields-tbody");
+            tbody.innerHTML = "";
+            
+            TARGET_FIELDS.forEach(field => {
+                const tr = document.createElement("tr");
+                tr.style.borderBottom = "1px solid var(--border-color)";
+                
+                // Form fuzzy automatic matching selection
+                let matchedHeader = "";
+                const normalizedAutoMatches = field.autoMatches.map(m => m.toLowerCase().replace(/\s+/g, "").trim());
+                
+                parsedHeaders.forEach(header => {
+                    const normalizedHeader = header.toLowerCase().replace(/_/g, "").replace(/\s+/g, "").trim();
+                    if (normalizedAutoMatches.includes(normalizedHeader)) {
+                        matchedHeader = header;
+                    }
+                });
+                
+                // Form Excel column dropdown options
+                let optionsHtml = `<option value="">-- (Hiçbiri - Boş Bırak) --</option>`;
+                parsedHeaders.forEach(header => {
+                    const isSelected = header === matchedHeader ? "selected" : "";
+                    optionsHtml += `<option value="${escapeHtml(header)}" ${isSelected}>${escapeHtml(header)}</option>`;
+                });
+                
+                tr.innerHTML = `
+                    <td style="padding: 0.85rem 1rem; vertical-align: middle;">
+                        <strong style="color: var(--text-primary); font-size: 0.85rem;">${field.label}</strong>
+                        <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem;">Field ID: <code>${field.id}</code></div>
+                    </td>
+                    <td style="padding: 0.85rem 1rem; vertical-align: middle;">
+                        <select class="form-control-modal select-mapping-dropdown" data-field-id="${field.id}" style="width: 100%; height: 36px; padding: 0.2rem 0.5rem; font-size: 0.85rem;" onchange="updateMappingPreview()">
+                            ${optionsHtml}
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            updateMappingPreview();
+        }
+
+        function updateMappingPreview() {
+            // Read active mapping settings
+            const mapping = {};
+            const dropdowns = document.querySelectorAll(".select-mapping-dropdown");
+            dropdowns.forEach(dd => {
+                const fieldId = dd.getAttribute("data-field-id");
+                const excelCol = dd.value;
+                mapping[fieldId] = excelCol;
+            });
+            
+            // Map parsed rows
+            mappedData = parsedRows.map(row => {
+                const mappedObj = {};
+                TARGET_FIELDS.forEach(field => {
+                    const excelCol = mapping[field.id];
+                    if (excelCol) {
+                        mappedObj[field.id] = row[excelCol];
+                    } else {
+                        mappedObj[field.id] = null;
+                    }
+                });
+                return mappedObj;
+            });
+            
+            // Render Live Row Preview Grid (Step 3 Table)
+            const headersTr = document.getElementById("import-preview-headers");
+            const previewTbody = document.getElementById("import-preview-body");
+            
+            headersTr.innerHTML = "";
+            previewTbody.innerHTML = "";
+            
+            // Render Mapped Target Column Headers
+            TARGET_FIELDS.forEach(field => {
+                headersTr.innerHTML += `<th style="padding: 0.6rem 0.85rem; font-weight: 700; font-size: 0.72rem;">${field.label.replace('*', '')}</th>`;
+            });
+            
+            // Render First 3 Mapped Rows
+            const sampleRows = mappedData.slice(0, 3);
+            if (sampleRows.length === 0) {
+                previewTbody.innerHTML = `<tr><td colspan="100" style="text-align: center; padding: 1.5rem; color: var(--text-secondary);">Önizleme verisi yok</td></tr>`;
+            } else {
+                sampleRows.forEach(row => {
+                    let trHtml = "<tr style='border-bottom: 1px solid rgba(0,0,0,0.04);'>";
+                    TARGET_FIELDS.forEach(field => {
+                        const val = row[field.id];
+                        if (val === null || val === undefined || val === "") {
+                            trHtml += `<td style="padding: 0.6rem 0.85rem; color: var(--text-secondary); font-style: italic; opacity: 0.65;">(Boş)</td>`;
+                        } else {
+                            trHtml += `<td style="padding: 0.6rem 0.85rem; color: var(--text-primary); font-weight: 500;">${escapeHtml(String(val))}</td>`;
+                        }
+                    });
+                    trHtml += "</tr>";
+                    previewTbody.innerHTML += trHtml;
+                });
+            }
+            
+            document.getElementById("preview-row-count").innerText = `${mappedData.length} adet`;
+            document.getElementById("wizard-file-name-badge").innerText = importFileName;
+        }
+
+        function wizardGoBack() {
+            if (importWizardStep > 1) {
+                importWizardStep--;
+                renderWizardStep();
+            }
+        }
+
+        function wizardGoNext() {
+            if (importWizardStep === 2) {
+                // Validate that both required fields (barcode, name) are mapped!
+                const dropdowns = document.querySelectorAll(".select-mapping-dropdown");
+                let barcodeMapped = false;
+                let nameMapped = false;
+                
+                dropdowns.forEach(dd => {
+                    const fieldId = dd.getAttribute("data-field-id");
+                    if (fieldId === 'barcode' && dd.value !== "") barcodeMapped = true;
+                    if (fieldId === 'name' && dd.value !== "") nameMapped = true;
+                });
+                
+                if (!barcodeMapped || !nameMapped) {
+                    showToast("Eşleştirme Eksik", "Zorunlu alanları (Barkod No ve Ürün Adı) Excel dosyanızdaki sütunlarla eşleştirmeniz gerekmektedir.", "error");
+                    return;
+                }
+                
+                importWizardStep = 3;
+                renderWizardStep();
+            }
+        }
+
+        async function submitImport() {
+            const importBtn = document.getElementById("wizard-btn-import");
+            const closeBtn = document.getElementById("wizard-btn-close");
+            const backBtn = document.getElementById("wizard-btn-back");
+            
+            importBtn.disabled = true;
+            importBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> İçe Aktarılıyor...`;
+            closeBtn.disabled = true;
+            backBtn.disabled = true;
+            
+            try {
+                const res = await fetch("/api/products/bulk-import", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(mappedData)
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast("İçe Aktarma Başarılı", `${data.inserted_count} yeni ürün eklendi, ${data.updated_count} ürün güncellendi!`, "success");
+                    closeImportWizard();
+                    
+                    // Reload table
+                    loadTable('products');
+                } else {
+                    showToast("Yükleme Hatası", data.error || "Sunucuda hata oluştu.", "error");
+                    
+                    importBtn.disabled = false;
+                    importBtn.innerHTML = `<i class="fa-solid fa-upload"></i> Verileri İçe Aktar`;
+                    closeBtn.disabled = false;
+                    backBtn.disabled = false;
+                }
+            } catch (err) {
+                console.error("Bulk import failed:", err);
+                showToast("Bağlantı Hatası", "Yükleme isteği gönderilirken bağlantı koptu.", "error");
+                
+                importBtn.disabled = false;
+                importBtn.innerHTML = `<i class="fa-solid fa-upload"></i> Verileri İçe Aktar`;
+                closeBtn.disabled = false;
+                backBtn.disabled = false;
+            }
+        }
+
+        function renderDeviceGenerationsTable() {
+            const tableHeaders = document.getElementById("table-headers");
+            const tableBody = document.getElementById("table-body");
+            
+            tableHeaders.innerHTML = "";
+            tableBody.innerHTML = "";
+            
+            tableHeaders.innerHTML = `
+                <th>CİHAZ MODELİ</th>
+                <th>NESİL / AİLE GRUBU</th>
+                <th>MARKA</th>
+                <th>DURUM</th>
+                <th style="text-align: center;">EYLEMLER</th>
+            `;
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="100" class="no-data-info">
+                            <i class="fa-solid fa-magnifying-glass no-data-icon"></i>
+                            <strong>Kayıt Bulunamadı</strong>
+                            <div style="font-size: 0.8rem;">Arama kriterlerine uygun cihaz nesil kaydı bulunmamaktadır.</div>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById("pagination-info-el").innerText = "Gösterilen Kayıt: 0 / Toplam: 0";
+                document.getElementById("pagination-controls-el").innerHTML = "";
+                return;
+            }
+            
+            // Paginate
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            pageData.forEach((row, idx) => {
+                let brandBadge = '';
+                const brandVal = (row.brand || '').toLowerCase();
+                if (brandVal === 'apple') {
+                    brandBadge = `<span style="background: rgba(15, 23, 42, 0.08); color: #1e293b; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-brands fa-apple"></i> Apple</span>`;
+                } else if (brandVal === 'samsung') {
+                    brandBadge = `<span style="background: rgba(59, 130, 246, 0.08); color: #2563eb; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-mobile-screen"></i> Samsung</span>`;
+                } else if (brandVal === 'huawei') {
+                    brandBadge = `<span style="background: rgba(239, 68, 68, 0.08); color: #dc2626; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-clock"></i> Huawei</span>`;
+                } else if (brandVal === 'xiaomi') {
+                    brandBadge = `<span style="background: rgba(249, 115, 22, 0.08); color: #ea580c; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-microchip"></i> Xiaomi</span>`;
+                } else {
+                    brandBadge = `<span style="background: rgba(100, 116, 139, 0.08); color: #475569; font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-info-circle"></i> ${escapeHtml(row.brand)}</span>`;
+                }
+                
+                let statusBadge = '';
+                let approveBtn = '';
+                if (row.status === 'PENDING_REVIEW') {
+                    statusBadge = `<span style="background: rgba(249, 115, 22, 0.12); color: var(--color-orange); border: 1px solid rgba(249, 115, 22, 0.2); font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-circle-question"></i> İnceleme Bekliyor</span>`;
+                    approveBtn = `
+                        <button class="btn-view-json" style="background: var(--color-green); border-color: var(--color-green); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center;" title="Nesil grubunu onayla" onclick="approveDeviceGeneration('${escapeHtml(row.device_model)}', 'input-dg-${idx}')">
+                            <i class="fa-solid fa-check"></i> Onayla
+                        </button>
+                    `;
+                } else {
+                    statusBadge = `<span style="background: rgba(16, 185, 129, 0.12); color: var(--color-green); border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-circle-check"></i> Onaylı</span>`;
+                }
+                
+                const trHtml = `
+                    <tr>
+                        <td><strong>${escapeHtml(row.device_model)}</strong></td>
+                        <td>
+                            <div style="display: flex; gap: 0.4rem; align-items: center; max-width: 300px;">
+                                <input type="text" id="input-dg-${idx}" class="search-input" value="${escapeHtml(row.generation_group)}" style="height: 30px; font-size: 0.8rem; padding: 0 0.5rem; flex: 1;" onchange="saveDeviceGenerationInline('${escapeHtml(row.device_model)}', this.value, '${row.status}')">
+                                <button class="btn-view-json" style="background: var(--color-blue); border-color: var(--color-blue); color: white; padding: 0.2rem 0.4rem; border-radius: 4px;" title="Kaydet" onclick="saveDeviceGenerationInline('${escapeHtml(row.device_model)}', document.getElementById('input-dg-${idx}').value, '${row.status}')">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td>${brandBadge}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
+                                ${approveBtn}
+                                <button class="btn-view-json" style="background: var(--color-red); border-color: var(--color-red); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-flex; align-items: center;" title="Sil" onclick="deleteDeviceGeneration('${escapeHtml(row.device_model)}')">
+                                    <i class="fa-solid fa-trash"></i> Sil
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += trHtml;
+            });
+            
+            // Pagination controls
+            document.getElementById("pagination-info-el").innerText = `Gösterilen Kayıt: ${startIndex + 1} - ${endIndex} / Toplam: ${filteredData.length}`;
+            
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            const controls = document.getElementById("pagination-controls-el");
+            controls.innerHTML = "";
+            
+            if (totalPages > 1) {
+                // Prev button
+                const prevBtn = document.createElement("button");
+                prevBtn.className = "page-btn";
+                prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.onclick = () => { currentPage--; renderTable(); };
+                controls.appendChild(prevBtn);
+                
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    const btn = document.createElement("button");
+                    btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                    btn.innerText = i;
+                    btn.onclick = () => { currentPage = i; renderTable(); };
+                    controls.appendChild(btn);
+                }
+                
+                // Next button
+                const nextBtn = document.createElement("button");
+                nextBtn.className = "page-btn";
+                nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+                nextBtn.disabled = currentPage === totalPages;
+                nextBtn.onclick = () => { currentPage++; renderTable(); };
+                controls.appendChild(nextBtn);
+            }
+        }
+
+        async function submitNewDeviceGeneration() {
+            const modelInput = document.getElementById("dg-input-model");
+            const groupInput = document.getElementById("dg-input-group");
+            const brandSelect = document.getElementById("dg-input-brand");
+            
+            const model = modelInput.value.trim();
+            const group = groupInput.value.trim();
+            const brand = brandSelect.value;
+            
+            if (!model || !group) {
+                showToast("Eksik Bilgi", "Lütfen cihaz modeli ve nesil grubunu giriniz.", "error");
+                return;
+            }
+            
+            try {
+                const res = await fetch("/api/device-generations", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        device_model: model,
+                        generation_group: group,
+                        brand: brand,
+                        status: "VERIFIED"
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Başarılı", `${model} cihaz nesil grubu kaydedildi.`, "success");
+                    modelInput.value = "";
+                    groupInput.value = "";
+                    loadTable('device_generations');
+                } else {
+                    showToast("Hata", data.error || "İşlem başarısız oldu.", "error");
+                }
+            } catch (err) {
+                showToast("Bağlantı Hatası", "Sunucuya istek gönderilemedi.", "error");
+            }
+        }
+
+        async function saveDeviceGenerationInline(deviceModel, groupValue, status) {
+            if (!groupValue || !groupValue.trim()) {
+                showToast("Hata", "Grup alanı boş olamaz.", "error");
+                return;
+            }
+            try {
+                const res = await fetch(`/api/device-generations/${encodeURIComponent(deviceModel)}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        generation_group: groupValue.trim(),
+                        status: status
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Güncellendi", "Değişiklikler kaydedildi.", "success");
+                    const item = rawData.find(d => d.device_model.toLowerCase() === deviceModel.toLowerCase());
+                    if (item) {
+                        item.generation_group = groupValue.trim();
+                    }
+                    const fItem = filteredData.find(d => d.device_model.toLowerCase() === deviceModel.toLowerCase());
+                    if (fItem) {
+                        fItem.generation_group = groupValue.trim();
+                    }
+                    renderDeviceGenerationsTable();
+                } else {
+                    showToast("Hata", data.error || "Güncelleme başarısız.", "error");
+                }
+            } catch (err) {
+                showToast("Bağlantı Hatası", "Güncelleme isteği gönderilemedi.", "error");
+            }
+        }
+
+        async function approveDeviceGeneration(deviceModel, inputId) {
+            const groupValue = document.getElementById(inputId).value;
+            await saveDeviceGenerationInline(deviceModel, groupValue, 'VERIFIED');
+            loadTable('device_generations');
+        }
+
+        async function deleteDeviceGeneration(deviceModel) {
+            if (!confirm(`'${deviceModel}' eşleşmesini silmek istediğinize emin misiniz?`)) {
+                return;
+            }
+            try {
+                const res = await fetch(`/api/device-generations/${encodeURIComponent(deviceModel)}`, {
+                    method: "DELETE"
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast("Silindi", "Eşleşme kaydı kaldırıldı.", "success");
+                    loadTable('device_generations');
+                } else {
+                    showToast("Hata", data.error || "Silme işlemi başarısız.", "error");
+                }
+            } catch (err) {
+                showToast("Bağlantı Hatası", "Silme isteği gönderilemedi.", "error");
+            }
+        }
+    </script>
+</body>
+</html>

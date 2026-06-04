@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibaks Verify - Akıllı Sipariş Simülatörü</title>
+    
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            --panel-bg: rgba(255, 255, 255, 0.7);
+            --border-color: rgba(226, 232, 240, 0.8);
+            
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            
+            --color-blue: #3b82f6;
+            --color-green: #10b981;
+            --color-orange: #f97316;
+            --color-red: #ef4444;
+            --color-purple: #8b5cf6;
+            
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--color-purple);
+            filter: drop-shadow(0 4px 8px rgba(139, 92, 246, 0.2));
+        }
+
+        .logo-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .navbar {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1.1rem;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .nav-btn:hover {
+            background: white;
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+        }
+
+        .nav-btn.active {
+            background: var(--color-purple);
+            color: white;
+            border-color: var(--color-purple);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+
+        .main-container {
+            flex: 1;
+            width: 100%;
+            max-width: 1100px;
+            margin: 2.5rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .card-header {
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding-bottom: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--text-primary);
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.35rem;
+            line-height: 1.4;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.65rem 0.9rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .form-control:focus {
+            background: white;
+            border-color: var(--color-purple);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+
+        .product-section-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--color-purple);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+            letter-spacing: 0.02em;
+        }
+
+        .divider {
+            height: 1px;
+            background: rgba(0,0,0,0.05);
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        /* Difficulty Slider styling */
+        .slider-container {
+            background: rgba(15, 23, 42, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slider-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .slider-badge.level-1 { background: rgba(16, 185, 129, 0.12); color: var(--color-green); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .slider-badge.level-3 { background: rgba(59, 130, 246, 0.12); color: var(--color-blue); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .slider-badge.level-5 { background: rgba(249, 115, 22, 0.12); color: var(--color-orange); border: 1px solid rgba(249, 115, 22, 0.2); }
+        .slider-badge.level-7 { background: rgba(239, 68, 68, 0.12); color: var(--color-red); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .slider-badge.level-9 { background: rgba(15, 23, 42, 0.85); color: #ffffff; border: 1px solid rgba(0,0,0,0.9); }
+
+        .slider-control {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #cbd5e1;
+            outline: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .slider-control::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--color-purple);
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(139, 92, 246, 0.4);
+            border: 2px solid white;
+            transition: transform 0.1s ease;
+        }
+
+        .slider-control::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .slider-desc {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            font-style: italic;
+        }
+
+        .btn-simulate {
+            background: linear-gradient(135deg, var(--color-purple) 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 0.85rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+            transition: all var(--transition-speed) ease;
+            font-family: 'Outfit', sans-serif;
+            margin-top: 0.5rem;
+        }
+
+        .btn-simulate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.35);
+        }
+
+        .btn-simulate:active {
+            transform: translateY(0);
+        }
+
+        /* Result Panel Styling */
+        .result-panel {
+            min-height: 500px;
+        }
+
+        .empty-result-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 0.75rem;
+            text-align: center;
+            flex-grow: 1;
+            padding: 3rem 1rem;
+        }
+
+        .empty-result-icon {
+            font-size: 3rem;
+            color: var(--text-muted);
+            opacity: 0.6;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .result-title-val {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Monospace JSON Tree style */
+        .json-preview {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 1.1rem;
+            border-radius: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.5;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Loader Overlay styling */
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            z-index: 10;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loader-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 4px solid rgba(139, 92, 246, 0.1);
+            border-top: 4px solid var(--color-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Flags cards */
+        .flag-pill {
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-weight: 600;
+        }
+
+        .flag-pill.CRITICAL {
+            background: rgba(239, 68, 68, 0.08);
+            color: var(--color-red);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+
+        .flag-pill.WARNING {
+            background: rgba(249, 115, 22, 0.08);
+            color: var(--color-orange);
+            border: 1px solid rgba(249, 115, 22, 0.15);
+        }
+
+        .btn-action-panel {
+            background: var(--color-green);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+            text-align: center;
+            justify-content: center;
+        }
+
+        .btn-action-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+        }
+
+        /* AI Engine Options styling */
+        .ai-engine-card {
+            background: rgba(139, 92, 246, 0.04);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-radius: 14px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-toggle-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.05);
+            padding: 0.25rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .ai-toggle-btn {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+        }
+
+        .ai-toggle-btn.active {
+            background: white;
+            color: var(--color-purple);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .ai-key-container {
+            display: none;
+            flex-direction: column;
+            gap: 0.4rem;
+            transition: all 0.3s ease;
+        }
+
+        .ai-key-container.active {
+            display: flex;
+        }
+
+        /* Glowing Terminal logs styling */
+        .ai-terminal-container {
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            margin-bottom: 1rem;
+            display: none; /* Initially hidden, visible on simulation run */
+        }
+
+        .ai-terminal-header {
+            background: #111827;
+            padding: 0.5rem 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .ai-terminal-dots {
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .ai-terminal-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .ai-terminal-dot.red { background: #ef4444; }
+        .ai-terminal-dot.yellow { background: #f59e0b; }
+        .ai-terminal-dot.green { background: #10b981; }
+
+        .ai-terminal-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ai-terminal {
+            font-family: 'JetBrains Mono', monospace;
+            background: #090d16;
+            color: #22d3ee;
+            padding: 1.1rem;
+            max-height: 185px;
+            overflow-y: auto;
+            overflow-x: auto;
+            word-break: break-all;
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.4);
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: #22d3ee;
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <i class="fa-solid fa-square-check logo-icon"></i>
+            <div>
+                <h1 class="logo-title">Fibaks <span style="font-weight: 300; color: var(--text-secondary);">Verify</span></h1>
+                <p class="logo-subtitle">Sipariş Simülasyon Arayüzü</p>
+            </div>
+        </div>
+        <div class="navbar">
+            <a href="/" class="nav-btn">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+            <a href="/database" class="nav-btn">
+                <i class="fa-solid fa-server"></i> Veritabanı (DB)
+            </a>
+            <button class="nav-btn active">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Sipariş Simülatörü
+            </button>
+            <a href="/whatsapp" class="nav-btn" style="background: rgba(37, 211, 102, 0.08); border-color: rgba(37, 211, 102, 0.3);">
+                <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 1.05rem;"></i> WhatsApp CRM <span class="badge" id="whatsapp-badge" style="display: none; background: var(--color-red); color: white; border-radius: 50%; padding: 0.15rem 0.4rem; font-size: 0.7rem; margin-left: 0.25rem;">0</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="main-container">
+        
+        <!-- Sol Taraf: Simulator Kontrolleri Formu -->
+        <div class="card">
+            <div class="loader-overlay" id="form-loader"><div class="spinner"></div></div>
+            
+            <div class="card-header">
+                <h2 class="card-title"><i class="fa-solid fa-gears" style="color: var(--color-purple);"></i> Sipariş Simülasyon Ayarları</h2>
+                <p class="card-desc">Tetiklemek istediğiniz parametreleri opsiyonel olarak girin. Boş bıraktığınız alanlar, seçtiğiniz zorluk seviyesine göre kural motorunu zorlayacak şekilde yapay zeka/algoritma tarafından otomatik üretilecektir.</p>
+            </div>
+
+            <!-- Yapay Zeka Motor Seçimi -->
+            <div class="ai-engine-card">
+                <span class="product-section-title" style="margin-top: 0; color: var(--color-purple);"><i class="fa-solid fa-brain"></i> Yapay Zeka (AI) Motor Ayarları</span>
+                <div class="ai-toggle-group">
+                    <button class="ai-toggle-btn active" id="btn-engine-local" onclick="selectAIEngine('local')">
+                        <i class="fa-solid fa-microchip"></i> Yerel Gelişmiş YZ
+                    </button>
+                    <button class="ai-toggle-btn" id="btn-engine-gemini" onclick="selectAIEngine('gemini')">
+                        <i class="fa-solid fa-cloud"></i> Bulut Gemini YZ
+                    </button>
+                </div>
+                <div class="ai-key-container" id="gemini-key-box">
+                    <label for="gemini-api-key" style="color: var(--color-purple); font-weight: 800; font-size: 0.72rem;"><i class="fa-solid fa-key"></i> Gemini API Anahtarı</label>
+                    <input type="password" id="gemini-api-key" class="form-control" placeholder="AIzaSy..." oninput="saveGeminiKey(this.value)">
+                    <p style="font-size: 0.65rem; color: var(--text-secondary); font-style: italic; margin-top: 0.15rem;">
+                        * API anahtarınız yerel tarayıcı hafızasında saklanır, sunucuda veya diske düz metin olarak kaydedilmez.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Form Groups -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="sim-customer">Müşteri Ad Soyad</label>
+                    <input type="text" id="sim-customer" class="form-control" placeholder="Örn: Merve Bulut (Boş = Rastgele)">
+                </div>
+                <div class="form-group">
+                    <label for="sim-marketplace">Satış Pazaryeri</label>
+                    <select id="sim-marketplace" class="form-control">
+                        <option value="Trendyol">Trendyol (Turuncu Kanal)</option>
+                        <option value="Hepsiburada">Hepsiburada (Mavi Kanal)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Siparişteki Ürün Adedi Seçimi -->
+            <div class="form-row" style="margin-top: 1rem;">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="sim-product-count" style="color: var(--color-purple); font-weight: 800;"><i class="fa-solid fa-layer-group"></i> Siparişteki Ürün Sayısı</label>
+                    <select id="sim-product-count" class="form-control" onchange="updateProductFormVisibility(parseInt(this.value))">
+                        <option value="1">1 Ürünlü Sipariş</option>
+                        <option value="2" selected>2 Ürünlü Sipariş (Varsayılan)</option>
+                        <option value="3">3 Ürünlü Sipariş</option>
+                        <option value="4">4 Ürünlü Sipariş</option>
+                        <option value="5">5 Ürünlü Sipariş</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="divider" id="products-divider-top" style="display: none;"></div>
+
+            <!-- Product 1 Card Parameters -->
+            <div id="p1-card-section">
+                <span class="product-section-title"><i class="fa-solid fa-basket-shopping"></i> 1. Sipariş Ürünü (Opsiyonel)</span>
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 0.6rem;">
+                    <div class="form-row" style="grid-column: span 2;">
+                        <div class="form-group" style="flex: 1 1 100%;">
+                            <label for="p1-sku-input">Depo Ürün ID veya Barkodu (Opsiyonel)</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="p1-sku-input" class="form-control" placeholder="Örn: b429e551-fb18-4212-80b9-dde6d22dbd7d veya 8685032022460" oninput="clearProductId(1)">
+                                <button type="button" class="btn" style="background: var(--color-blue); color: white; padding: 0.375rem 1.25rem; border-radius: 8px; font-weight: 600;" onclick="fetchProductInfo(1)">Getir</button>
+                            </div>
+                            <input type="hidden" id="p1-product-id" value="">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p1-cat">Ürün Kategorisi</label>
+                            <select id="p1-cat" class="form-control">
+                                <option value="">Rastgele Belirlensin (Öneri)</option>
+                                <option value="KILIF">KILIF (Telefon Kılıfı)</option>
+                                <option value="CAM">CAM (Ekran Koruyucu)</option>
+                                <option value="KORDON">KORDON (Watch Kordonu)</option>
+                                <option value="GARD">GARD (Watch Koruyucu Kasa)</option>
+                                <option value="KAMERA LENS">KAMERA LENS (Lens Koruyucu)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="p1-model">ERP Uyumlu Model</label>
+                            <input type="text" id="p1-model" class="form-control" placeholder="Örn: iPhone 15 Pro Max">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p1-compat">Uyumlu Etiket Metni (Opsiyonel)</label>
+                            <input type="text" id="p1-compat" class="form-control" placeholder="Örn: İP 13-14-15 (Boşsa kopyalanır)">
+                        </div>
+                        <div class="form-group">
+                            <label for="p1-title">Pazaryeri Ürün Adı / Başlığı</label>
+                            <input type="text" id="p1-title" class="form-control" placeholder="Örn: iPhone 15 Pro Max Lansman Kılıfı Siyah">
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+            </div>
+
+            <!-- Product 2 Card Parameters -->
+            <div id="p2-card-section">
+                <span class="product-section-title"><i class="fa-solid fa-basket-shopping"></i> 2. Sipariş Ürünü (Opsiyonel)</span>
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 0.6rem;">
+                    <div class="form-row" style="grid-column: span 2;">
+                        <div class="form-group" style="flex: 1 1 100%;">
+                            <label for="p2-sku-input">Depo Ürün ID veya Barkodu (Opsiyonel)</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="p2-sku-input" class="form-control" placeholder="Örn: b429e551-fb18-4212-80b9-dde6d22dbd7d veya 8685032022460" oninput="clearProductId(2)">
+                                <button type="button" class="btn" style="background: var(--color-blue); color: white; padding: 0.375rem 1.25rem; border-radius: 8px; font-weight: 600;" onclick="fetchProductInfo(2)">Getir</button>
+                            </div>
+                            <input type="hidden" id="p2-product-id" value="">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p2-cat">Ürün Kategorisi</label>
+                            <select id="p2-cat" class="form-control">
+                                <option value="">Rastgele Belirlensin (Öneri)</option>
+                                <option value="KILIF">KILIF (Telefon Kılıfı)</option>
+                                <option value="CAM">CAM (Ekran Koruyucu)</option>
+                                <option value="KORDON">KORDON (Watch Kordonu)</option>
+                                <option value="GARD">GARD (Watch Koruyucu Kasa)</option>
+                                <option value="KAMERA LENS">KAMERA LENS (Lens Koruyucu)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="p2-model">ERP Uyumlu Model</label>
+                            <input type="text" id="p2-model" class="form-control" placeholder="Örn: iPhone 15 Pro">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p2-compat">Uyumlu Etiket Metni (Opsiyonel)</label>
+                            <input type="text" id="p2-compat" class="form-control" placeholder="Örn: İP 13-14-15 (Boşsa kopyalanır)">
+                        </div>
+                        <div class="form-group">
+                            <label for="p2-title">Pazaryeri Ürün Adı / Başlığı</label>
+                            <input type="text" id="p2-title" class="form-control" placeholder="Örn: iPhone 15 Pro Kamera Korumalı Şeffaf Kılıf">
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+            </div>
+
+            <!-- Product 3 Card Parameters -->
+            <div id="p3-card-section" style="display: none;">
+                <span class="product-section-title"><i class="fa-solid fa-basket-shopping"></i> 3. Sipariş Ürünü (Opsiyonel)</span>
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 0.6rem;">
+                    <div class="form-row" style="grid-column: span 2;">
+                        <div class="form-group" style="flex: 1 1 100%;">
+                            <label for="p3-sku-input">Depo Ürün ID veya Barkodu (Opsiyonel)</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="p3-sku-input" class="form-control" placeholder="Örn: b429e551-fb18-4212-80b9-dde6d22dbd7d veya 8685032022460" oninput="clearProductId(3)">
+                                <button type="button" class="btn" style="background: var(--color-blue); color: white; padding: 0.375rem 1.25rem; border-radius: 8px; font-weight: 600;" onclick="fetchProductInfo(3)">Getir</button>
+                            </div>
+                            <input type="hidden" id="p3-product-id" value="">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p3-cat">Ürün Kategorisi</label>
+                            <select id="p3-cat" class="form-control">
+                                <option value="">Rastgele Belirlensin (Öneri)</option>
+                                <option value="KILIF">KILIF (Telefon Kılıfı)</option>
+                                <option value="CAM">CAM (Ekran Koruyucu)</option>
+                                <option value="KORDON">KORDON (Watch Kordonu)</option>
+                                <option value="GARD">GARD (Watch Koruyucu Kasa)</option>
+                                <option value="KAMERA LENS">KAMERA LENS (Lens Koruyucu)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="p3-model">ERP Uyumlu Model</label>
+                            <input type="text" id="p3-model" class="form-control" placeholder="Örn: iPhone 16 Pro Max">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p3-compat">Uyumlu Etiket Metni (Opsiyonel)</label>
+                            <input type="text" id="p3-compat" class="form-control" placeholder="Örn: İP 16 (Boşsa kopyalanır)">
+                        </div>
+                        <div class="form-group">
+                            <label for="p3-title">Pazaryeri Ürün Adı / Başlığı</label>
+                            <input type="text" id="p3-title" class="form-control" placeholder="Örn: iPhone 16 Pro Max Privacy Ekran Koruyucu">
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+            </div>
+
+            <!-- Product 4 Card Parameters -->
+            <div id="p4-card-section" style="display: none;">
+                <span class="product-section-title"><i class="fa-solid fa-basket-shopping"></i> 4. Sipariş Ürünü (Opsiyonel)</span>
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 0.6rem;">
+                    <div class="form-row" style="grid-column: span 2;">
+                        <div class="form-group" style="flex: 1 1 100%;">
+                            <label for="p4-sku-input">Depo Ürün ID veya Barkodu (Opsiyonel)</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="p4-sku-input" class="form-control" placeholder="Örn: b429e551-fb18-4212-80b9-dde6d22dbd7d veya 8685032022460" oninput="clearProductId(4)">
+                                <button type="button" class="btn" style="background: var(--color-blue); color: white; padding: 0.375rem 1.25rem; border-radius: 8px; font-weight: 600;" onclick="fetchProductInfo(4)">Getir</button>
+                            </div>
+                            <input type="hidden" id="p4-product-id" value="">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p4-cat">Ürün Kategorisi</label>
+                            <select id="p4-cat" class="form-control">
+                                <option value="">Rastgele Belirlensin (Öneri)</option>
+                                <option value="KILIF">KILIF (Telefon Kılıfı)</option>
+                                <option value="CAM">CAM (Ekran Koruyucu)</option>
+                                <option value="KORDON">KORDON (Watch Kordonu)</option>
+                                <option value="GARD">GARD (Watch Koruyucu Kasa)</option>
+                                <option value="KAMERA LENS">KAMERA LENS (Lens Koruyucu)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="p4-model">ERP Uyumlu Model</label>
+                            <input type="text" id="p4-model" class="form-control" placeholder="Örn: Samsung Galaxy S24 Ultra">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p4-compat">Uyumlu Etiket Metni (Opsiyonel)</label>
+                            <input type="text" id="p4-compat" class="form-control" placeholder="Örn: GLX S24 Ultra (Boşsa kopyalanır)">
+                        </div>
+                        <div class="form-group">
+                            <label for="p4-title">Pazaryeri Ürün Adı / Başlığı</label>
+                            <input type="text" id="p4-title" class="form-control" placeholder="Örn: Samsung Galaxy S24 Ultra Zırhlı Tank Kılıfı">
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+            </div>
+
+            <!-- Product 5 Card Parameters -->
+            <div id="p5-card-section" style="display: none;">
+                <span class="product-section-title"><i class="fa-solid fa-basket-shopping"></i> 5. Sipariş Ürünü (Opsiyonel)</span>
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-top: 0.6rem;">
+                    <div class="form-row" style="grid-column: span 2;">
+                        <div class="form-group" style="flex: 1 1 100%;">
+                            <label for="p5-sku-input">Depo Ürün ID veya Barkodu (Opsiyonel)</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="p5-sku-input" class="form-control" placeholder="Örn: b429e551-fb18-4212-80b9-dde6d22dbd7d veya 8685032022460" oninput="clearProductId(5)">
+                                <button type="button" class="btn" style="background: var(--color-blue); color: white; padding: 0.375rem 1.25rem; border-radius: 8px; font-weight: 600;" onclick="fetchProductInfo(5)">Getir</button>
+                            </div>
+                            <input type="hidden" id="p5-product-id" value="">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p5-cat">Ürün Kategorisi</label>
+                            <select id="p5-cat" class="form-control">
+                                <option value="">Rastgele Belirlensin (Öneri)</option>
+                                <option value="KILIF">KILIF (Telefon Kılıfı)</option>
+                                <option value="CAM">CAM (Ekran Koruyucu)</option>
+                                <option value="KORDON">KORDON (Watch Kordonu)</option>
+                                <option value="GARD">GARD (Watch Koruyucu Kasa)</option>
+                                <option value="KAMERA LENS">KAMERA LENS (Lens Koruyucu)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="p5-model">ERP Uyumlu Model</label>
+                            <input type="text" id="p5-model" class="form-control" placeholder="Örn: Apple Watch Ultra 49mm">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="p5-compat">Uyumlu Etiket Metni (Opsiyonel)</label>
+                            <input type="text" id="p5-compat" class="form-control" placeholder="Örn: 49mm (Boşsa kopyalanır)">
+                        </div>
+                        <div class="form-group">
+                            <label for="p5-title">Pazaryeri Ürün Adı / Başlığı</label>
+                            <input type="text" id="p5-title" class="form-control" placeholder="Örn: Apple Watch Ultra 49mm Uyumlu Çelik Kordon">
+                        </div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+            </div>
+
+            <!-- Difficulty Slider -->
+            <div class="slider-container">
+                <div class="slider-header">
+                    <label for="sim-difficulty">Metin/Regex Zorluk Derecesi</label>
+                    <span class="slider-badge level-5" id="difficulty-badge">Seviye 5: Orta</span>
+                </div>
+                <input type="range" id="sim-difficulty" class="slider-control" min="1" max="10" value="5" oninput="updateDifficultyLabel(this.value)">
+                <p class="slider-desc" id="difficulty-desc">Kelimeler arasına rastgele fazladan boşluklar eklenir, harflerin büyük/küçük halleri karmaşıklaştırılır (Case & Spacing Normalizasyonu test edilir).</p>
+            </div>
+
+            <button class="btn-simulate" onclick="generateSimulatedOrder()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Siparişi Simüle Et ve Veritabanına Yaz
+            </button>
+        </div>
+
+        <!-- Sağ Taraf: Simülasyon Çıktı Raporu -->
+        <div class="card result-panel" id="result-card-panel">
+            <!-- Yapay Zeka Terminali -->
+            <div class="ai-terminal-container" id="ai-terminal-box">
+                <div class="ai-terminal-header">
+                    <div class="ai-terminal-dots">
+                        <span class="ai-terminal-dot red"></span>
+                        <span class="ai-terminal-dot yellow"></span>
+                        <span class="ai-terminal-dot green"></span>
+                    </div>
+                    <span class="ai-terminal-title" id="terminal-engine-name">Yerel YZ Düşünce Konsolu</span>
+                    <i class="fa-solid fa-terminal" style="font-size: 0.7rem; color: #22d3ee;"></i>
+                </div>
+                <div class="ai-terminal" id="ai-terminal-logs">
+                    <div>> [SYSTEM]: Yapay zeka motoru tetiklenmeyi bekliyor...</div>
+                </div>
+            </div>
+
+            <div class="empty-result-state" id="empty-results">
+                <i class="fa-solid fa-microchip empty-result-icon"></i>
+                <h3 style="font-family: 'Outfit', sans-serif; color: var(--text-primary);">Simülasyon Çıktısı Hazır Değil</h3>
+                <p style="font-size: 0.85rem; max-width: 250px;">Sol taraftaki ayarları düzenleyip simülasyon butonuna bastıktan sonra kural motorunun karar kanıtı ve üretilen JSON verileri burada belirecektir.</p>
+            </div>
+            
+            <div id="results-display" style="display: none; flex-direction: column; gap: 1.25rem; height: 100%;">
+                <div class="card-header" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.85rem;">
+                    <h2 class="card-title" style="color: var(--color-green);"><i class="fa-solid fa-circle-check"></i> Sipariş Başarıyla Üretildi!</h2>
+                    <p class="card-desc">Kural motoru bu dummy siparişi analiz etti ve canlı ERP tablolarına başarıyla kaydetti.</p>
+                </div>
+                
+                <div style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 12px; font-size: 0.84rem; display: grid; grid-template-columns: 1.1fr 1fr; gap: 0.75rem;">
+                    <div>Müşteri: <strong class="result-title-val" id="res-cust">-</strong></div>
+                    <div>Sipariş Numarası: <strong class="result-title-val" id="res-num">-</strong></div>
+                    <div>Pazaryeri: <span id="res-mkt" class="slider-badge level-3">-</span></div>
+                    <div>Seviye: <strong class="result-title-val" id="res-diff">-</strong></div>
+                </div>
+                
+                <!-- Risk Gauge -->
+                <div style="border: 1px solid var(--border-color); padding: 1.1rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);"><i class="fa-solid fa-gauge-high"></i> Hesaplanan Risk Puanı</span>
+                        <strong style="font-size: 1.1rem;" id="res-score-val">%0</strong>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: rgba(15,23,42,0.05); border-radius: 10px; overflow: hidden; position: relative;">
+                        <div id="res-gauge-bar" style="width: 0%; height: 100%; background: var(--color-green); border-radius: 10px; transition: width 0.5s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- Generated Products -->
+                <div>
+                    <label>Çözümlenen Dummy Ürün Kalemleri</label>
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.4rem;" id="res-products-list"></div>
+                </div>
+                
+                <!-- Triggered Flags -->
+                <div>
+                    <label>Tetiklenen Risk Bayrakları</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem;" id="res-flags-list"></div>
+                </div>
+
+                <!-- JSON Code Preview -->
+                <div style="display: flex; flex-direction: column; gap: 0.4rem; flex-grow: 1;">
+                    <label><i class="fa-solid fa-code"></i> Üretilen Sipariş JSON (Raw Data)</label>
+                    <pre class="json-preview" id="res-json-block"></pre>
+                </div>
+                
+                <!-- Actions -->
+                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;" id="res-action-container">
+                    <!-- Action Link injected here -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let activeEngine = 'local';
+        
+        function selectAIEngine(engine) {
+            activeEngine = engine;
+            const btnLocal = document.getElementById("btn-engine-local");
+            const btnGemini = document.getElementById("btn-engine-gemini");
+            const keyBox = document.getElementById("gemini-key-box");
+            
+            if (engine === 'local') {
+                btnLocal.classList.add("active");
+                btnGemini.classList.remove("active");
+                keyBox.classList.remove("active");
+            } else {
+                btnGemini.classList.add("active");
+                btnLocal.classList.remove("active");
+                keyBox.classList.add("active");
+                
+                // Restore key if exists
+                const savedKey = localStorage.getItem("fibaks_gemini_key");
+                if (savedKey) {
+                    document.getElementById("gemini-api-key").value = savedKey;
+                }
+            }
+        }
+
+        function saveGeminiKey(val) {
+            localStorage.setItem("fibaks_gemini_key", val.trim());
+        }
+
+        // Dynamic Product Input Card Visibility
+        function updateProductFormVisibility(count) {
+            for (let i = 1; i <= 5; i++) {
+                const section = document.getElementById(`p${i}-card-section`);
+                if (section) {
+                    section.style.display = i <= count ? "block" : "none";
+                }
+            }
+        }
+
+        function updateWhatsappBadgeCount() {
+            fetch('/api/whatsapp/chats')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const unresolvedCount = data.chats.filter(c => 
+                            c.message_status === 'cevap bekleniyor' || c.message_status === 'itiraz - şikayet'
+                        ).length;
+                        const badge = document.getElementById('whatsapp-badge');
+                        if (badge) {
+                            if (unresolvedCount > 0) {
+                                badge.innerText = unresolvedCount;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error("Error fetching badge count:", err));
+        }
+
+        // Restore key on DOM load
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedKey = localStorage.getItem("fibaks_gemini_key");
+            if (savedKey) {
+                document.getElementById("gemini-api-key").value = savedKey;
+            }
+            updateDifficultyLabel(document.getElementById("sim-difficulty").value);
+            // Default show 2 products
+            updateProductFormVisibility(2);
+            updateWhatsappBadgeCount();
+        });
+
+        function updateDifficultyLabel(val) {
+            const badge = document.getElementById("difficulty-badge");
+            const desc = document.getElementById("difficulty-desc");
+            
+            badge.className = "slider-badge";
+            
+            if (val <= 2) {
+                badge.innerText = `Seviye ${val}: Kolay`;
+                badge.classList.add("level-1");
+                desc.innerText = "Temiz, hatasız ve tamamen standart başlıklar ve modeller üretilir. Kural motorunu zorlamaz.";
+            } else if (val <= 4) {
+                badge.innerText = `Seviye ${val}: Orta-Kolay`;
+                badge.classList.add("level-3");
+                desc.innerText = "Harflerin büyüklük ve küçüklük halleri karmaşıklaştırılır (Case Normalizasyonu test edilir).";
+            } else if (val <= 6) {
+                badge.innerText = `Seviye ${val}: Orta-Zor`;
+                badge.classList.add("level-5");
+                desc.innerText = "Kelimeler arasına rastgele 2 ila 4 adet fazla boşluklar eklenir (Spacing Normalizasyonu zorlanır).";
+            } else if (val <= 8) {
+                badge.innerText = `Seviye ${val}: Zor`;
+                badge.classList.add("level-7");
+                desc.innerText = "Akıllı saat kordon başlıklarına 'Pro Max' / 'Pro' gibi yanıltıcı telefon serisi kelimeleri eklenerek hiyerarşik router zorlanır.";
+            } else {
+                badge.innerText = `Seviye ${val}: Kaotik`;
+                badge.classList.add("level-9");
+                desc.innerText = "Karışık harf, aşırı boşluk, alt marka ve uyuşmazlık kelimelerinin tamamı harmanlanarak regex motoru sınırlarına kadar sınanır!";
+            }
+        }
+
+        function appendTerminalLog(termLogs, text, color = '#22d3ee') {
+            const div = document.createElement("div");
+            div.style.color = color;
+            div.innerText = text;
+            termLogs.appendChild(div);
+            termLogs.scrollTop = termLogs.scrollHeight;
+        }
+
+        async function runTerminalTypewriter(termLogs, logs) {
+            termLogs.innerHTML = "";
+            for (let i = 0; i < logs.length; i++) {
+                let logLine = logs[i];
+                let color = '#22d3ee'; // cyan
+                if (logLine.includes("[CRITICAL]")) color = '#ef4444'; // red
+                if (logLine.includes("[WARNING]")) color = '#f97316'; // orange
+                if (logLine.includes("[SYSTEM]")) color = '#c084fc'; // purple
+                if (logLine.includes("[DATABASE]")) color = '#34d399'; // light green
+                if (logLine.includes("[ENGINE]")) color = '#fbbf24'; // yellow
+                if (logLine.includes("[AI]")) color = '#60a5fa'; // blue
+                if (logLine.includes("[MUTATION]")) color = '#f472b6'; // pink
+                
+                appendTerminalLog(termLogs, logLine, color);
+                // Slight typewriter delay
+                await new Promise(resolve => setTimeout(resolve, 150));
+            }
+        }
+
+        function fetchProductInfo(idx) {
+            const query = document.getElementById(`p${idx}-sku-input`).value.trim();
+            if (!query) {
+                alert("Lütfen bir Depo Ürün ID'si veya Barkod girin.");
+                return;
+            }
+            
+            fetch(`/api/products/resolve-single?query=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById(`p${idx}-product-id`).value = data.id;
+                        document.getElementById(`p${idx}-cat`).value = data.category || "";
+                        document.getElementById(`p${idx}-model`).value = data.product_model || "";
+                        document.getElementById(`p${idx}-title`).value = data.name || "";
+                        document.getElementById(`p${idx}-compat`).value = data.label_compatible_model || "";
+                        
+                        document.getElementById(`p${idx}-sku-input`).value = data.id;
+                    } else {
+                        alert("Ürün bulunamadı: " + (data.error || "Bilinmiyor"));
+                    }
+                })
+                .catch(err => {
+                    console.error("Error resolving product:", err);
+                    alert("Ürün sorgulanırken hata oluştu.");
+                });
+        }
+        
+        function clearProductId(idx) {
+            const val = document.getElementById(`p${idx}-sku-input`).value.trim();
+            if (!val) {
+                document.getElementById(`p${idx}-product-id`).value = "";
+            }
+        }
+
+        function generateSimulatedOrder() {
+            const loader = document.getElementById("form-loader");
+            loader.classList.add("active");
+            
+            // Show and reset AI Terminal
+            const termBox = document.getElementById("ai-terminal-box");
+            const termLogs = document.getElementById("ai-terminal-logs");
+            termBox.style.display = "block";
+            termLogs.innerHTML = "";
+            
+            const engineTitle = activeEngine === 'local' ? 'Yerel Gelişmiş YZ Düşünce Konsolu' : 'Bulut Gemini YZ Düşünce Konsolu';
+            document.getElementById("terminal-engine-name").innerText = engineTitle;
+            
+            appendTerminalLog(termLogs, "> [SYSTEM]: Yapay Zeka motoru hazırlanıyor...");
+            appendTerminalLog(termLogs, "> [PROMPT]: İstem şablonu ve kural parametreleri yükleniyor...");
+            
+            // Hide previous results while loading
+            document.getElementById("results-display").style.display = "none";
+            document.getElementById("empty-results").style.display = "none";
+            
+            // Collect Form values
+            const apiKey = activeEngine === 'gemini' ? document.getElementById("gemini-api-key").value : "";
+            
+            // Collect dynamic products list
+            const count = parseInt(document.getElementById("sim-product-count").value);
+            const products = [];
+            for (let i = 1; i <= count; i++) {
+                products.push({
+                    product_id: document.getElementById(`p${i}-product-id`).value,
+                    category: document.getElementById(`p${i}-cat`).value,
+                    model: document.getElementById(`p${i}-model`).value,
+                    title: document.getElementById(`p${i}-title`).value,
+                    compat: document.getElementById(`p${i}-compat`).value
+                });
+            }
+            
+            const payload = {
+                difficulty: parseInt(document.getElementById("sim-difficulty").value),
+                marketplace: document.getElementById("sim-marketplace").value,
+                customer_name: document.getElementById("sim-customer").value,
+                gemini_api_key: apiKey,
+                products: products,
+                // Backward compatibility fallbacks
+                product_1: products[0] || {},
+                product_2: products[1] || {}
+            };
+            
+            fetch("/api/simulate-order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(async data => {
+                loader.classList.remove("active");
+                
+                if (!data.success) {
+                    // Render whatever logs were returned before failing
+                    if (data.thinking_log) {
+                        await runTerminalTypewriter(termLogs, data.thinking_log);
+                    }
+                    appendTerminalLog(termLogs, `> [CRITICAL]: Simülasyon hatası: ${data.error || 'Bilinmeyen hata'}`, '#ef4444');
+                    alert("Simülasyon Hatası: " + (data.error || "Bilinmeyen hata"));
+                    return;
+                }
+                
+                // 1. Run Typewriter console logs
+                if (data.thinking_log) {
+                    await runTerminalTypewriter(termLogs, data.thinking_log);
+                }
+                
+                // 2. Display result panel fields
+                const display = document.getElementById("results-display");
+                display.style.display = "flex";
+                
+                // Set Values
+                document.getElementById("res-cust").innerText = data.customer_name;
+                document.getElementById("res-num").innerText = "#" + data.order_number;
+                
+                const mktBadge = document.getElementById("res-mkt");
+                mktBadge.innerText = data.marketplace;
+                mktBadge.className = "slider-badge " + (data.marketplace === 'Trendyol' ? 'level-5' : 'level-3');
+                
+                document.getElementById("res-diff").innerText = "Seviye " + data.difficulty;
+                
+                // Gauge and Score
+                const score = data.analysis_result.risk_score;
+                document.getElementById("res-score-val").innerText = "%" + score;
+                
+                const gaugeBar = document.getElementById("res-gauge-bar");
+                gaugeBar.style.width = score + "%";
+                
+                const statusColor = data.analysis_result.status_color;
+                gaugeBar.style.background = statusColor === 'red' ? 'var(--color-red)' : statusColor === 'orange' ? 'var(--color-orange)' : 'var(--color-green)';
+                document.getElementById("res-score-val").style.color = statusColor === 'red' ? 'var(--color-red)' : statusColor === 'orange' ? 'var(--color-orange)' : 'var(--color-green)';
+                
+                // List products
+                const prodContainer = document.getElementById("res-products-list");
+                prodContainer.innerHTML = "";
+                data.generated_lines.forEach(p => {
+                    prodContainer.innerHTML += `
+                        <div style="background: rgba(255,255,255,0.4); border: 1px solid var(--border-color); padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.78rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem;">
+                                <strong style="color: var(--color-purple); font-size: 0.68rem; text-transform: uppercase;">${p.category}</strong>
+                                <span style="font-family: monospace; color: var(--text-muted); font-size: 0.7rem;">Barkod: ${p.barcode}</span>
+                            </div>
+                            <div style="color: var(--text-primary); font-weight: 700; margin-bottom: 0.15rem; word-break: break-all;">${p.title}</div>
+                            <div style="font-size: 0.72rem; color: var(--text-secondary);">Model Eşleşmesi: <strong style="color: var(--color-green);">${p.model}</strong></div>
+                        </div>
+                    `;
+                });
+                
+                // List Flags
+                const flagsContainer = document.getElementById("res-flags-list");
+                flagsContainer.innerHTML = "";
+                if (data.analysis_result.flags.length === 0) {
+                    flagsContainer.innerHTML = `<span class="flag-pill" style="background: rgba(16,185,129,0.1); color: var(--color-green); border: 1px solid rgba(16,185,129,0.2);"><i class="fa-solid fa-circle-check"></i> Güvenli Sipariş (Bayrak Tetiklenmedi)</span>`;
+                } else {
+                    data.analysis_result.flags.forEach(f => {
+                        flagsContainer.innerHTML += `
+                            <span class="flag-pill ${f.type}">
+                                <i class="fa-solid ${f.type === 'CRITICAL' ? 'fa-triangle-exclamation' : 'fa-circle-exclamation'}"></i>
+                                ${f.title} (+${f.score} Pts)
+                            </span>
+                        `;
+                    });
+                }
+                
+                // Display JSON
+                const rawJson = {
+                    order_number: data.order_number,
+                    marketplace: data.marketplace,
+                    customer: data.customer_name,
+                    shipment_address: { city: "Istanbul", fullName: data.customer_name },
+                    lines: data.generated_lines.map(p => ({
+                        barcode: p.barcode,
+                        productName: p.title,
+                        quantity: 1,
+                        price: 110.0
+                    }))
+                };
+                document.getElementById("res-json-block").innerText = JSON.stringify(rawJson, null, 2);
+                
+                // Display action button
+                document.getElementById("res-action-container").innerHTML = `
+                    <a href="/?order_id=${data.order_id}" class="btn-action-panel">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i> Üretilen Siparişi Onay Panelinde İncele <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                `;
+                
+                // Scroll result card into view on mobile
+                if (window.innerWidth < 768) {
+                    document.getElementById("result-card-panel").scrollIntoView({ behavior: 'smooth' });
+                }
+                updateWhatsappBadgeCount();
+            })
+            .catch(err => {
+                loader.classList.remove("active");
+                appendTerminalLog(termLogs, `> [CRITICAL]: Sunucu bağlantı hatası oluştu: ${err}`, '#ef4444');
+                alert("Simülasyon sırasında hata oluştu: " + err);
+            });
+        }
+    </script>
+</body>
+</html>

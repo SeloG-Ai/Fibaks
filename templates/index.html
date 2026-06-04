@@ -1,0 +1,3383 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fibaks Verify - Akıllı Sipariş & İlişki Yönetim Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Vis.js Standalone CDN -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style>
+        /* Design System - Premium Glassmorphic Beyaz Tema */
+        :root {
+            --bg-color: #f1f5f9;
+            --panel-bg: rgba(255, 255, 255, 0.75);
+            --card-bg: rgba(255, 255, 255, 0.45);
+            --border-color: rgba(15, 23, 42, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            
+            /* Status Colors */
+            --color-green: #10b981;
+            --color-red: #ef4444;
+            --color-orange: #f97316;
+            --color-blue: #3b82f6;
+            --color-purple: #8b5cf6;
+            --color-pink: #ec4899;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(139, 92, 246, 0.04) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(59, 130, 246, 0.04) 0px, transparent 50%);
+            min-height: 100vh;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            font-size: 1.75rem;
+            background: linear-gradient(135deg, var(--color-blue), var(--color-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.25));
+        }
+
+        .logo-title {
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .navbar {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-primary);
+            background: rgba(15, 23, 42, 0.04);
+        }
+
+        .nav-btn.active {
+            color: var(--text-primary);
+            background: #ffffff;
+            border-color: rgba(15, 23, 42, 0.08);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        }
+
+        .main-container {
+            max-width: 1650px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ------------------------
+           SİPARİŞ İZLEME PANELİ
+           ------------------------ */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 480px minmax(0, 1fr);
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(15, 23, 42, 0.04);
+            backdrop-filter: blur(12px);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .order-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .order-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(15, 23, 42, 0.12);
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.03);
+        }
+
+        .order-card.selected {
+            border-color: var(--color-blue);
+            background: rgba(59, 130, 246, 0.04);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.08);
+        }
+
+        .order-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+        }
+
+
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .order-num {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .marketplace-badge {
+            font-size: 0.72rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .marketplace-badge.trendyol {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .marketplace-badge.hepsiburada {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .order-body {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .customer-info {
+            color: var(--text-secondary);
+        }
+
+        .customer-info strong {
+            color: var(--text-primary);
+        }
+
+        .order-meta {
+            text-align: right;
+        }
+
+        .order-price {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text-primary);
+            margin-top: 0.2rem;
+        }
+
+        .items-list {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+        }
+
+        .item-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 85%;
+            color: var(--text-primary);
+        }
+
+        .badge-list {
+            display: flex;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .flag-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .flag-badge.CRITICAL {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .flag-badge.WARNING {
+            background: rgba(249, 115, 22, 0.15);
+            color: #f97316;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .flag-badge.INFO {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .detail-panel {
+            position: relative;
+        }
+
+        .orders-sidebar {
+            position: sticky;
+            top: 5.5rem;
+            max-height: calc(100vh - 8rem);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #orders-list-container {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 0.5rem;
+        }
+
+        #orders-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #orders-list-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #orders-list-container::-webkit-scrollbar-thumb {
+            background: rgba(15, 23, 42, 0.08);
+            border-radius: 3px;
+        }
+
+        #orders-list-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(15, 23, 42, 0.15);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+        }
+
+        .status-header.green {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--color-green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-header.red {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--color-red);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .status-header.orange {
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--color-orange);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .status-icon {
+            font-size: 1.75rem;
+        }
+
+        .detail-section-title {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ------------------------
+           KAYNAK VE TAKİP KARTLARI
+           ------------------------ */
+        .source-tracking-card {
+            background: rgba(255, 255, 255, 0.45);
+            border: 1px solid rgba(15, 23, 42, 0.06);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+        }
+
+        .tracking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+            padding-bottom: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .tracking-index {
+            background: var(--color-blue);
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .tracking-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .db-tag {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .db-tag.table {
+            background: rgba(139, 92, 246, 0.12);
+            color: #a855f7;
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+
+        .db-tag.column {
+            background: rgba(236, 72, 153, 0.12);
+            color: #ec4899;
+            border: 1px solid rgba(236, 72, 153, 0.25);
+        }
+
+        .analiz-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .analiz-section {
+            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(15, 23, 42, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .analiz-section-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .analiz-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+            font-size: 0.85rem;
+        }
+
+        .analiz-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .analiz-label {
+            color: var(--text-secondary);
+        }
+
+        .analiz-value {
+            color: var(--text-primary);
+            font-weight: 500;
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flow-connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            padding: 0.25rem 0;
+            opacity: 0.6;
+        }
+
+        .flag-desc-card {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: start;
+        }
+
+        .flag-desc-card.WARNING {
+            background: rgba(249, 115, 22, 0.05);
+            border: 1px solid rgba(249, 115, 22, 0.15);
+        }
+
+        .flag-desc-card.INFO {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+        }
+
+        .flag-desc-icon {
+            font-size: 1.2rem;
+            margin-top: 0.1rem;
+        }
+
+        .flag-desc-icon.CRITICAL { color: var(--color-red); }
+        .flag-desc-icon.WARNING { color: var(--color-orange); }
+        .flag-desc-icon.INFO { color: var(--color-blue); }
+
+        .flag-desc-text h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .flag-desc-text p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* ------------------------
+           SEPET VE RİSK İLİŞKİ ŞEMASI STİLLERİ
+           ------------------------ */
+        .basket-analysis-wrapper {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .basket-section-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--color-purple);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .basket-cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .basket-item-card {
+            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(15, 23, 42, 0.05);
+            border-radius: 12px;
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 180px;
+            flex: 1 1 180px;
+        }
+
+        .basket-item-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+        }
+
+        /* Kategori Renk Eşleşmeleri */
+        .basket-item-card.KILIF { border-left: 3px solid var(--color-blue); }
+        .basket-item-card.CAM { border-left: 3px solid var(--color-green); }
+        .basket-item-card.KORDON { border-left: 3px solid var(--color-purple); }
+        .basket-item-card.GARD { border-left: 3px solid var(--color-orange); }
+        .basket-item-card.KAMERA_LENS { border-left: 3px solid var(--color-red); }
+        .basket-item-card.LENS { border-left: 3px solid var(--color-red); }
+
+        /* Uyuşmazlık Çakışan Ürün */
+        .basket-item-card.in-conflict {
+            border: 1.5px solid rgba(239, 68, 68, 0.4);
+            border-left: 3.5px solid var(--color-red);
+            background: rgba(239, 68, 68, 0.02);
+            animation: pulse-border 2.5s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.1); }
+            50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.35); }
+            100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.1); }
+        }
+
+        .conflict-property-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.18);
+            width: fit-content;
+            margin-top: 0.1rem;
+        }
+
+        /* Çakışma Köprüsü Şeması */
+        .conflict-bridge-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding: 0.85rem;
+            border-radius: 12px;
+            background: rgba(239, 68, 68, 0.02);
+            border: 1px dashed rgba(239, 68, 68, 0.22);
+        }
+
+        .conflict-bridge-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .conflict-bridge-line {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            height: 32px;
+        }
+
+        .conflict-bridge-line::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 1px;
+            border-top: 1px dashed rgba(239, 68, 68, 0.35);
+            z-index: 1;
+        }
+
+        .conflict-bridge-badge {
+            background: #ef4444;
+            color: white;
+            font-size: 0.68rem;
+            font-weight: 800;
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+            font-family: 'Outfit', sans-serif;
+            white-space: nowrap;
+            z-index: 2;
+        }
+
+        /* ------------------------
+           KURAL YÖNETİMİ PANELİ
+           ------------------------ */
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 450px 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .rules-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid rgba(15, 23, 42, 0.12);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-blue);
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.15);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-submit {
+            background: var(--color-blue);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--color-red);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-delete:hover {
+            background: var(--color-red);
+            color: white;
+        }
+
+        /* ------------------------
+           YENİ SEKME: ÜRÜN İLİŞKİ LİSTESİ YÖNETİMİ
+           ------------------------ */
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.5fr 1fr;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            align-items: end;
+        }
+
+        @media (max-width: 900px) {
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Satır Genişleme Efektleri */
+        .relation-row {
+            cursor: pointer;
+            transition: background 0.25s;
+        }
+
+        .relation-row:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .expanded-drawer-row {
+            display: none;
+            background: rgba(15, 23, 42, 0.6) !important;
+        }
+
+        .expanded-drawer-row.active {
+            display: table-row;
+        }
+
+        .drawer-content-container {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2rem;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-top: none;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            box-shadow: inset 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 900px) {
+            .drawer-content-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .drawer-title {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Uyum Düğümleri */
+        .compat-node-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .compat-node-pill {
+            background: rgba(16, 185, 129, 0.08);
+            color: var(--color-green);
+            border: 1px solid rgba(16,185,129,0.25);
+            padding: 0.3rem 0.6rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .compat-node-pill .btn-pill-delete {
+            background: transparent;
+            border: none;
+            color: var(--color-red);
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .compat-node-pill .btn-pill-delete:hover {
+            opacity: 1;
+        }
+
+        /* Eşleşme Ekleme Formu */
+        .compat-add-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .compat-add-form input {
+            flex-grow: 1;
+        }
+
+        .btn-add-pill {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--color-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 0 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.3s;
+        }
+
+        .btn-add-pill:hover {
+            background: var(--color-green);
+            color: white;
+        }
+
+        /* Önden Hazırlık Butonu */
+        .btn-prematch {
+            background: linear-gradient(135deg, var(--color-purple), var(--color-pink));
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-prematch:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+        }
+
+        /* ------------------------
+           İLİŞKİ HİYERARŞİK HARİTASI
+           ------------------------ */
+        .network-container {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 1.5rem;
+            height: calc(100vh - 12rem);
+        }
+
+        @media (max-width: 1024px) {
+            .network-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+        }
+
+        .network-canvas-card {
+            position: relative;
+            height: 100%;
+            min-height: 580px;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #network-graph {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            background-color: #0d1220;
+        }
+
+        .network-legend {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .legend-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .legend-shape {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+
+        .shape-circle { border-radius: 50%; }
+        .shape-triangle {
+            width: 0;
+            height: 0;
+            border-left: 9px solid transparent;
+            border-right: 9px solid transparent;
+            border-bottom: 18px solid var(--color-green);
+            background: transparent !important;
+        }
+        .shape-diamond {
+            width: 14px;
+            height: 14px;
+            background: var(--color-blue);
+            transform: rotate(45deg);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            color: var(--text-primary);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+            opacity: 0.5;
+        }
+
+        .btn-reload {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--color-blue);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-reload:hover {
+            background: rgba(59, 130, 246, 0.25);
+            color: var(--text-primary);
+        }
+
+        /* Loaders and Spinner Styles */
+        .loader-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-left-color: var(--color-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Container */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        /* Premium Toast */
+        .toast {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.08), 
+                        0 4px 12px -2px rgba(15, 23, 42, 0.03), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            min-width: 320px;
+            max-width: 420px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(120%);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+        }
+
+        .toast-success .toast-icon {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--color-green);
+        }
+
+        .toast-error .toast-icon {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--color-red);
+        }
+
+        .toast-info .toast-icon {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--color-blue);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .toast-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .toast-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            opacity: 0.5;
+            cursor: pointer;
+            padding: 4px;
+            transition: opacity 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+
+        /* Refresh spinning animation */
+        .btn-reload i.spinning {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toast-container"></div>
+
+    <header>
+        <div class="logo-area">
+            <i class="fa-solid fa-square-check logo-icon"></i>
+            <div>
+                <h1 class="logo-title">Fibaks <span style="font-weight: 300; color: var(--text-secondary);">Verify</span></h1>
+                <p class="logo-subtitle">Sipariş Onay & İlişki Harita Dashboard</p>
+            </div>
+        </div>
+        <div class="navbar">
+            <button class="nav-btn active" onclick="switchTab('orders-tab', this)">
+                <i class="fa-solid fa-list-check"></i> Sipariş Onay Paneli
+            </button>
+            <!-- İlişki Haritası şimdilik rafa kaldırıldı 
+            <button class="nav-btn" onclick="switchTab('relations-tab', this)">
+                <i class="fa-solid fa-diagram-project"></i> İlişki Harita Listesi
+            </button>
+            -->
+            <button class="nav-btn" onclick="switchTab('rules-tab', this)">
+                <i class="fa-solid fa-triangle-exclamation"></i> Risk Kuralları
+            </button>
+            <button class="nav-btn" onclick="switchTab('data-tab', this)">
+                <i class="fa-solid fa-database"></i> ERP Ürün Eşleşmeleri
+            </button>
+            <a href="/database" class="nav-btn">
+                <i class="fa-solid fa-server"></i> Veri Havuzu (DB)
+            </a>
+            <a href="/simulate" class="nav-btn">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Sipariş Simülatörü
+            </a>
+            <a href="/whatsapp" class="nav-btn" style="background: rgba(37, 211, 102, 0.08); border-color: rgba(37, 211, 102, 0.3);">
+                <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 1.05rem;"></i> WhatsApp CRM <span class="badge" id="whatsapp-badge" style="display: none; background: var(--color-red); color: white; border-radius: 50%; padding: 0.15rem 0.4rem; font-size: 0.7rem; margin-left: 0.25rem;">0</span>
+            </a>
+            <button class="btn-reload" onclick="reloadData(true)" style="margin-left: 1rem;">
+                <i class="fa-solid fa-rotate"></i> Güncelle
+            </button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        
+        <!-- =======================================
+             SEKME 1: SİPARİŞ İZLEME PANELİ (ANA SAYFA)
+             ======================================= -->
+        <div id="orders-tab" class="tab-content active">
+            <div class="dashboard-grid">
+                
+                <!-- Sol Taraf: Sipariş Listesi -->
+                <div class="card orders-sidebar">
+                    <div id="orders-loader" class="loader-overlay"><div class="spinner"></div></div>
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fa-solid fa-receipt" style="color: var(--color-blue);"></i> Gelen Siparişler</h2>
+                        <span id="order-count-badge" style="background: rgba(255,255,255,0.08); font-size: 0.8rem; padding: 0.25rem 0.5rem; border-radius: 6px;">5 Sipariş</span>
+                    </div>
+                    
+                    <div id="orders-list-container"></div>
+                </div>
+
+                <!-- Sağ Taraf: Detay ve Veri Kaynak Takip Kartları -->
+                <div class="detail-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title"><i class="fa-solid fa-magnifying-glass-chart" style="color: var(--color-purple);"></i> Sipariş Analizi ve Veri Kaynak Takibi</h2>
+                        </div>
+                        
+                        <div id="order-detail-container">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-hand-pointer"></i>
+                                Sol taraftan bir sipariş seçerek, siparişte yer alan ürünlerin veritabanı kaynak takibini inceleyebilirsiniz.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- =======================================
+             SEKME 2: ÜRÜN İLİŞKİ LİSTESİ YÖNETİMİ (YENİ - CRITICAL!)
+             ======================================= -->
+        <div id="relations-tab" class="tab-content">
+            <div class="card" style="position: relative;">
+                <div id="relations-loader" class="loader-overlay" style="display: none;"><div class="spinner"></div></div>
+                
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fa-solid fa-table-list" style="color: var(--color-blue);"></i> Ürün Cihaz Uyumluluk ve İlişki Haritası</h2>
+                    <!-- Önden Hazırlık Batch Butonu -->
+                    <button class="btn-prematch" onclick="handlePreMatchBatch()">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Yeni Ürünleri Eşle & İlişkilendir (Önden Hazırlık)
+                    </button>
+                </div>
+
+                <!-- Filtre Satırı -->
+                <div class="filter-row">
+                    <div class="input-group">
+                        <label for="filter-brand">Marka Filtresi</label>
+                        <select id="filter-brand" class="form-control" onchange="fetchProducts()">
+                            <option value="ALL">Hepsi (Markalar)</option>
+                            <option value="Apple">Apple / iPhone</option>
+                            <option value="Honor">Honor</option>
+                            <option value="Huawei">Huawei</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="filter-model">Model Filtresi</label>
+                        <select id="filter-model" class="form-control" onchange="fetchProducts()">
+                            <option value="ALL">Hepsi (Modeller)</option>
+                            <option value="iPhone 11">iPhone 11</option>
+                            <option value="iPhone 16 Pro">iPhone 16 Pro</option>
+                            <option value="iPhone 7 Plus">iPhone 7/8 Plus</option>
+                            <option value="Huawei Watch Fit 3">Huawei Watch Fit 3</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="search-product">Kelime ile Arama</label>
+                        <input type="text" id="search-product" class="form-control" placeholder="Ürün adı veya barkod..." onkeyup="fetchProducts()">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="sort-product">Sıralama (Sort)</label>
+                        <select id="sort-product" class="form-control" onchange="fetchProducts()">
+                            <option value="name">Alfabetik (İsim)</option>
+                            <option value="category">Kategoriye Göre</option>
+                            <option value="stock">Stok Miktarına Göre</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Ürün Tablosu -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ERP Barkodu</th>
+                                <th>Ürün Adı</th>
+                                <th>Kategori</th>
+                                <th>Model Kodu (Etiket)</th>
+                                <th>Stok Miktarı</th>
+                                <th>Uyumlu Model Sayısı</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relations-table-body">
+                            <!-- JS ile doldurulacak -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- =======================================
+             SEKME 3: RİSK KURALLARI YÖNETİMİ
+             ======================================= -->
+        <div id="rules-tab" class="tab-content">
+            <div class="rules-grid">
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fa-solid fa-plus" style="color: var(--color-blue);"></i> Yeni Risk Kuralı Ekle</h2>
+                    </div>
+                    
+                    <form id="new-rule-form" onsubmit="handleCreateRule(event)">
+                        <div class="input-group">
+                            <label for="rule-brand">Cihaz Markası (İsteğe Bağlı)</label>
+                            <input type="text" id="rule-brand" class="form-control" placeholder="Örn: Honor, Samsung, Xiaomi">
+                        </div>
+                        <div class="input-group">
+                            <label for="rule-pattern">Model Filtresi / Aranan Kelime (İsteğe Bağlı)</label>
+                            <input type="text" id="rule-pattern" class="form-control" placeholder="Örn: Lite, Ultra, Watch Fit (Sadece marka kuralı için boş bırakın)">
+                        </div>
+                        <div class="input-group">
+                            <label for="rule-barcodes">Ürün Barkod(ları) (Çoklu ekleme için virgül veya boşluk bırakarak yazın - İsteğe Bağlı)</label>
+                            <textarea id="rule-barcodes" class="form-control" placeholder="Örn: 8685032049573, 8685032049382 (Marka/model filtrelerini bypass eder ve doğrudan eşleşme sağlar)" rows="2"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="rule-message">Müşteri Uyarı Mesaj Detayı</label>
+                            <textarea id="rule-message" class="form-control" placeholder="Örn: Cihazın Lite serisi mi yoksa Pro mu olduğunu doğrulatın." required></textarea>
+                        </div>
+                        <button type="submit" class="btn-submit">
+                            <i class="fa-solid fa-floppy-disk"></i> Kuralı Kaydet
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card" style="position: relative;">
+                    <div id="rules-loader" class="loader-overlay" style="display: none;"><div class="spinner"></div></div>
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fa-solid fa-table-list" style="color: var(--color-purple);"></i> Aktif Risk Kuralları</h2>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cihaz Markası</th>
+                                    <th>Aranan Kelime (Model)</th>
+                                    <th>Barkodlar</th>
+                                    <th>Müşteri Uyarı Mesaj Detayı</th>
+                                    <th>Durum</th>
+                                    <th style="width: 50px;">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rules-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Çekirdek Sistem Risk Kontrolleri (Akıllı Karar Matrisi) -->
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fa-solid fa-microchip" style="color: var(--color-red);"></i> Çekirdek Sistem Risk Kontrolleri (Akıllı Karar Matrisi)</h2>
+                </div>
+                
+                <div style="background: rgba(59, 130, 246, 0.04); border: 1px solid rgba(59, 130, 246, 0.12); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-bolt" style="color: var(--color-orange); font-size: 1.5rem;"></i>
+                    <div>
+                        <strong>Performans & İşlem Yükü Bilgilendirmesi:</strong> Bu kontroller, veritabanı sorgu yükü yaratmadan <strong>in-memory (bellek içi) regex & pattern matching</strong> ile 0.1ms gibi yok sayılabilecek bir işlem yüküyle çalışır. Müşteri memnuniyetini artırmak ve operasyonel iadeleri depodan çıkmadan önlemek için otomatik tetiklenir.
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kontrol Adı</th>
+                                <th>Risk Seviyesi</th>
+                                <th style="text-align: center;">Varsayılan Etki</th>
+                                <th>Tetiklenme Mantığı & Ne Zaman Çalışır?</th>
+                                <th>Durum</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Çapraz Model Boyut Uyuşmazlığı (Pro vs Pro Max)</strong></td>
+                                <td><span class="flag-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--color-red); border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700;">🔴 Çok Yüksek</span></td>
+                                <td style="text-align: center; color: var(--color-red); font-weight: 700;">+90 Puan</td>
+                                <td>Aynı cihaz serisine (örn: iPhone 15) ait kılıf ve cam aksesuarlarının boyut varyantlarının (Pro vs Pro Max veya Plus) çelişmesini denetler.</td>
+                                <td><span style="color: var(--color-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> AKTİF (Algoritmik)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mobil Ağ Nesli Çelişkisi (4G vs 5G)</strong></td>
+                                <td><span class="flag-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--color-red); border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700;">🔴 Çok Yüksek</span></td>
+                                <td style="text-align: center; color: var(--color-red); font-weight: 700;">+85 Puan</td>
+                                <td>Aynı model serisinde 4G ve 5G nesillerinin (Örn: Redmi Note 13 Pro 4G kılıf, Redmi Note 13 Pro 5G cam) bir arada sipariş edilmesini denetler.</td>
+                                <td><span style="color: var(--color-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> AKTİF (Algoritmik)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Akıllı Saat mm Boyut Uyuşmazlığı</strong></td>
+                                <td><span class="flag-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--color-red); border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700;">🔴 Yüksek</span></td>
+                                <td style="text-align: center; color: var(--color-red); font-weight: 700;">+75 Puan</td>
+                                <td>Sepetteki akıllı saat aksesuarlarının milimetre (mm) ölçülerinin (örn: 45mm kordon, 41mm ekran koruyucu kasa) farklı seçilmesini denetler.</td>
+                                <td><span style="color: var(--color-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> AKTİF (Algoritmik)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Aynı Cihaz Modelinden Çoklu Aksesuar Siparişi</strong></td>
+                                <td><span class="flag-badge" style="background: rgba(239, 68, 68, 0.15); color: var(--color-red); border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700;">🔴 Yüksek</span></td>
+                                <td style="text-align: center; color: var(--color-red); font-weight: 700;">+80 Puan</td>
+                                <td>Aynı model cihaz için aynı kategoride (kılıf, cam, kordon vb.) birden fazla ürün alındığında mükerrer veya yanlış sipariş ihtimalini denetler.</td>
+                                <td><span style="color: var(--color-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> AKTİF (Algoritmik)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Farklı Cihaz Modellerinden Çoklu Aksesuar Siparişi</strong></td>
+                                <td><span class="flag-badge" style="background: rgba(249, 115, 22, 0.15); color: var(--color-orange); border: 1px solid rgba(249, 115, 22, 0.3); font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700;">🟡 Düşük/Orta</span></td>
+                                <td style="text-align: center; color: var(--color-orange); font-weight: 700;">+40 Puan</td>
+                                <td>Siparişte aynı kategoriye ait (kılıf, cam, kordon vb.) fakat farklı telefon modelleri için ürünler seçilmesini denetler.</td>
+                                <td><span style="color: var(--color-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> AKTİF (Algoritmik)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>B2C Yüksek Adet Sipariş Kontrolü</strong></td>
+                                <td><span class="flag-badge" style="background: rgba(249, 115, 22, 0.15); color: var(--color-orange); border: 1px solid rgba(249, 115, 22, 0.3); font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700;">🟡 Orta</span></td>
+                                <td style="text-align: center; color: var(--color-orange); font-weight: 700;">+45 Puan</td>
+                                <td>Herhangi bir tekil kalemin 3 adet ve daha fazla sipariş edilmesini (yanlışlıkla sepet sayısını artırma) denetler.</td>
+                                <td><span style="color: var(--color-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> AKTİF (Algoritmik)</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Çapraz Marka Çelişkisi (Cross-Brand)</strong></td>
+                                <td><span class="flag-badge" style="background: rgba(59, 130, 246, 0.15); color: var(--color-blue); border: 1px solid rgba(59, 130, 246, 0.3); font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700;">🟡 Düşük</span></td>
+                                <td style="text-align: center; color: var(--color-blue); font-weight: 700;">+35 Puan</td>
+                                <td>Aynı sepette tamamen farklı markalara (örn: Apple kılıf ve Samsung cam) ait aksesuar bulunmasını denetler.</td>
+                                <td><span style="color: var(--color-green); font-weight: 600;"><i class="fa-solid fa-circle-check"></i> AKTİF (Algoritmik)</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- =======================================
+             SEKME 4: ERP ÜRÜN EŞLEŞMELERİ TABLOSU
+             ======================================= -->
+        <div id="data-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fa-solid fa-list" style="color: var(--color-green);"></i> ERP Ürün İlişki ve Barkod Haritası</h2>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ERP Ürün ID</th>
+                                <th>Barkod</th>
+                                <th>Ürün Adı</th>
+                                <th>Kategori</th>
+                                <th>Uyumlu Model</th>
+                                <th>Etiket Eşleşmesi</th>
+                                <th>Renk</th>
+                                <th>Stok Adet</th>
+                            </tr>
+                        </thead>
+                        <tbody id="erp-products-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="text/javascript">
+        let ordersData = [];
+        let selectedOrderId = null;
+
+        function updateWhatsappBadgeCount() {
+            fetch('/api/whatsapp/chats')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const unresolvedCount = data.chats.filter(c => 
+                            c.message_status === 'cevap bekleniyor' || c.message_status === 'itiraz - şikayet'
+                        ).length;
+                        const badge = document.getElementById('whatsapp-badge');
+                        if (badge) {
+                            if (unresolvedCount > 0) {
+                                badge.innerText = unresolvedCount;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                badge.style.display = 'none';
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error("Error fetching badge count:", err));
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            reloadData();
+            updateWhatsappBadgeCount();
+        });
+
+        // Sleek Toast Notification Helper
+        function showToast(title, desc, type = 'success') {
+            let container = document.getElementById("toast-container");
+            if (!container) {
+                container = document.createElement("div");
+                container.className = "toast-container";
+                container.id = "toast-container";
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement("div");
+            toast.className = `toast toast-${type}`;
+
+            let iconHtml = '<i class="fa-solid fa-circle-check"></i>';
+            if (type === 'error') {
+                iconHtml = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else if (type === 'info') {
+                iconHtml = '<i class="fa-solid fa-circle-info"></i>';
+            }
+
+            toast.innerHTML = `
+                <div class="toast-icon">${iconHtml}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-desc">${desc}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.classList.remove('show'); setTimeout(() => this.parentElement.remove(), 400);"><i class="fa-solid fa-xmark"></i></button>
+            `;
+
+            container.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.add("show");
+            }, 10);
+
+            // Auto dismiss after 4 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.remove("show");
+                    setTimeout(() => {
+                        if (toast.parentNode) toast.remove();
+                    }, 400);
+                }
+            }, 4000);
+        }
+
+        function reloadData(isManualClick = false) {
+            document.getElementById("orders-loader").style.display = "flex";
+            
+            // Spin the refresh icon
+            const reloadIcon = document.querySelector(".btn-reload i");
+            if (reloadIcon) {
+                reloadIcon.classList.add("spinning");
+            }
+            
+            let p;
+            if (isManualClick) {
+                p = fetch("/api/orders/simulate", { method: "POST" })
+                    .then(res => res.json())
+                    .then(simData => {
+                        if (simData.success) {
+                            showToast("Simülasyon Başarılı", `${simData.generated_count} adet yeni random sipariş üretildi ve DB'ye kaydedildi.`, "success");
+                        } else {
+                            showToast("Simülasyon Hatası", simData.error || "Bilinmeyen bir hata oluştu.", "error");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Simülasyon başarısız:", err);
+                        showToast("Bağlantı Hatası", "Simülasyon API'sine erişilemedi.", "error");
+                    });
+            } else {
+                p = Promise.resolve();
+            }
+            
+            p.then(() => {
+                return fetch("/api/orders");
+            })
+            .then(res => res.json())
+            .then(data => {
+                ordersData = data;
+                renderOrdersList();
+                renderERPProductsTable();
+                
+                if (ordersData.length > 0) {
+                    if (selectedOrderId) {
+                        showOrderDetail(selectedOrderId);
+                    } else {
+                        showOrderDetail(ordersData[0].id);
+                    }
+                }
+                updateWhatsappBadgeCount();
+                hideLoader("orders-loader");
+                if (reloadIcon) {
+                    reloadIcon.classList.remove("spinning");
+                }
+            })
+            .catch(err => {
+                console.error("Siparişler yüklenemedi:", err);
+                updateWhatsappBadgeCount();
+                hideLoader("orders-loader");
+                showToast("Yükleme Hatası", "Sipariş listesi güncellenemedi.", "error");
+                if (reloadIcon) {
+                    reloadIcon.classList.remove("spinning");
+                }
+            });
+        }
+
+        function hideLoader(id) {
+            const loader = document.getElementById(id);
+            if(loader) {
+                loader.style.opacity = "0";
+                setTimeout(() => {
+                    loader.style.display = "none";
+                }, 300);
+            }
+        }
+
+        function switchTab(tabId, btn) {
+            const contents = document.querySelectorAll(".tab-content");
+            contents.forEach(c => c.classList.remove("active"));
+            
+            document.getElementById(tabId).classList.add("active");
+            
+            const buttons = document.querySelectorAll(".nav-btn");
+            buttons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            if (tabId === 'relations-tab') {
+                fetchProducts();
+            }
+            if (tabId === 'rules-tab') {
+                fetchRules();
+            }
+        }
+
+        // Sipariş Kartlarını Listele
+        function renderOrdersList() {
+            const container = document.getElementById("orders-list-container");
+            container.innerHTML = "";
+
+            if (ordersData.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>Sipariş bulunamadı.</div>`;
+                return;
+            }
+
+            ordersData.forEach(o => {
+                const isSelected = o.id === selectedOrderId ? 'selected' : '';
+                
+                let itemsHtml = "";
+                o.lines.forEach(line => {
+                    itemsHtml += `
+                        <div class="item-row">
+                            <span class="item-name">${line.marketplace_title}</span>
+                            <span>x${line.quantity}</span>
+                        </div>
+                    `;
+                });
+
+                let badgesHtml = "";
+                if (o.critical_count > 0) {
+                    badgesHtml += `<span class="flag-badge CRITICAL"><i class="fa-solid fa-triangle-exclamation"></i> ${o.critical_count} Uyumsuzluk</span>`;
+                }
+                if (o.warning_count > 0) {
+                    badgesHtml += `<span class="flag-badge WARNING"><i class="fa-solid fa-circle-exclamation"></i> ${o.warning_count} Risk</span>`;
+                }
+                if (o.critical_count === 0 && o.warning_count === 0) {
+                    badgesHtml += `<span class="flag-badge" style="background: rgba(16, 185, 129, 0.12); color: var(--color-green); border: 1px solid rgba(16, 185, 129, 0.2);"><i class="fa-solid fa-circle-check"></i> Uyumlu</span>`;
+                }
+
+                const cardHtml = `
+                    <div class="order-card status-${o.status_color} ${isSelected}" onclick="showOrderDetail(${o.id})">
+                        <div class="order-header">
+                            <span class="order-num"><i class="fa-solid fa-basket-shopping"></i> #${o.order_number}</span>
+                            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                <span class="marketplace-badge ${o.marketplace.toLowerCase()}">${o.marketplace}</span>
+                                <span class="risk-badge" style="background: ${o.status_color === 'red' ? 'rgba(239, 68, 68, 0.15)' : o.status_color === 'orange' ? 'rgba(249, 115, 22, 0.15)' : 'rgba(16, 185, 129, 0.15)'}; color: ${o.status_color === 'red' ? '#ef4444' : o.status_color === 'orange' ? '#f97316' : '#10b981'}; border: 1px solid ${o.status_color === 'red' ? 'rgba(239, 68, 68, 0.3)' : o.status_color === 'orange' ? 'rgba(249, 115, 22, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; font-size: 0.72rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700;">Risk: %${o.risk_score}</span>
+                            </div>
+                        </div>
+                        <div class="order-body">
+                            <div class="customer-info">
+                                Müşteri: <strong>${o.customer_name}</strong><br>
+                                Durum: <strong>${o.status}</strong>
+                            </div>
+                            <div class="order-meta">
+                                <span style="font-size: 0.75rem; color: var(--text-secondary);">Tutar</span>
+                                <div class="order-price">${o.total_price} TL</div>
+                            </div>
+                        </div>
+                        <div class="items-list">
+                            ${itemsHtml}
+                        </div>
+                        <div class="badge-list">
+                            ${badgesHtml}
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        // Sipariş Detay Paneli Göster
+        function showOrderDetail(orderId) {
+            selectedOrderId = orderId;
+            
+            const cards = document.querySelectorAll(".order-card");
+            cards.forEach(c => c.classList.remove("selected"));
+            
+            const o = ordersData.find(item => item.id === orderId);
+            if (!o) return;
+
+            const activeCard = Array.from(document.querySelectorAll(".order-card")).find(card => card.innerHTML.includes(`#${o.order_number}`));
+            if (activeCard) activeCard.classList.add("selected");
+
+            const container = document.getElementById("order-detail-container");
+
+            let statusClass = o.status_color;
+            let statusText = "🟢 Siparişte Cihaz Modeli Uyuşmazlığı veya Risk Tespit Edilmedi";
+            let statusIcon = "fa-circle-check";
+            
+            if (o.status_color === "red") {
+                statusText = "🔴 KRİTİK: Siparişte Cihaz Modeli Uyuşmazlığı Tespit Edildi!";
+                statusIcon = "fa-triangle-exclamation";
+            } else if (o.status_color === "orange") {
+                statusText = "🟡 UYARI: Siparişte Tanımlı Risk Kuralı Tetiklendi!";
+                statusIcon = "fa-circle-exclamation";
+            }
+
+            // --- DETAYLI SEPET KARTLARI VE GÖRSEL ÇAKIŞMA HARİTASI HESAPLAMA ---
+            let basketHtml = "";
+            let conflicts = []; // array of { type: "", title: "", desc: "", items: [barcode1, barcode2] }
+            
+            // Helper to get device ecosystem: 'watch' or 'phone'
+            function getDeviceEcosystem(line) {
+                let cat = (line.erp_category || "").toUpperCase();
+                let name = (line.erp_product_name || "").toLowerCase();
+                let title = (line.marketplace_title || "").toLowerCase();
+                let model = (line.erp_product_model || "").toLowerCase();
+                
+                if (["KORDON", "GARD", "SAAT_KILIF"].includes(cat) || 
+                    ["watch", "fit 2", "fit 3", "kordon", "gard"].some(k => name.includes(k) || title.includes(k) || model.includes(k))) {
+                    return "watch";
+                }
+                return "phone";
+            }
+
+            function normalizeModelName(modelName) {
+                if (!modelName) return "";
+                return modelName.toLowerCase().trim().replace(/\s+/g, ' ');
+            }
+
+            // Helper to format model names beautifully for display in badges and UI elements
+            function getPremiumModelDisplay(modelName) {
+                if (!modelName) return "";
+                // Replace combining dot above and dotless i
+                let clean = modelName.toLowerCase().replace(/i̇/g, 'i').replace(/ı/g, 'i').trim().replace(/\s+/g, ' ');
+                // Standardize casing for common terms
+                return clean.split(' ').map(word => {
+                    if (word === 'iphone') return 'iPhone';
+                    if (word === 'ipad') return 'iPad';
+                    if (word === 'pro') return 'Pro';
+                    if (word === 'max') return 'Max';
+                    if (word === 'plus') return 'Plus';
+                    if (word === 'ultra') return 'Ultra';
+                    if (word === 'lite') return 'Lite';
+                    if (word === 'watch') return 'Watch';
+                    if (word === 'galaxy') return 'Galaxy';
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                }).join(' ');
+            }
+
+            // Helper to route phone variant
+            function getPhoneVariant(title, model) {
+                let text = ((title || "") + " " + (model || "")).toLowerCase();
+                if (text.includes("pro max")) return "Pro Max";
+                if (text.includes("pro plus")) return "Pro Plus";
+                if (text.includes("plus") && !text.includes("12 pro plus") && !text.includes("13 pro plus") && !text.includes("11 pro plus")) return "Plus";
+                if (text.includes("ultra")) return "Ultra";
+                if (text.includes("pro") && !text.includes("pro max") && !text.includes("pro plus")) return "Pro";
+                if (text.includes("lite")) return "Lite";
+                return "Standart";
+            }
+            
+            function getPhoneBase(title, model) {
+                let text = ((title || "") + " " + (model || "")).toLowerCase();
+                let match = text.match(/(iphone\s*\d+|galaxy\s*[s]\d+|redmi\s*note\s*\d+|watch\s*\d+|watch\s*fit\s*\d+)/i);
+                return match ? match[0].replace(/\s+/g, '').toLowerCase() : null;
+            }
+
+            function getBrandName(title, model) {
+                let text = ((title || "") + " " + (model || "")).toLowerCase();
+                if (text.includes("iphone") || text.includes("apple") || text.includes("watch")) return "Apple";
+                if (text.includes("samsung") || text.includes("galaxy")) return "Samsung";
+                if (text.includes("xiaomi") || text.includes("redmi") || text.includes("poco")) return "Xiaomi";
+                if (text.includes("huawei")) return "Huawei";
+                return "Diğer";
+            }
+
+            // 1. Akıllı Saat mm Boyut Çelişkisi Bulucu (WATCH ecosystem only)
+            let watchLines = o.lines.filter(l => getDeviceEcosystem(l) === "watch");
+            if (watchLines.length > 1) {
+                // Extract sizes
+                let parsedWatchItems = watchLines.map(l => {
+                    let text = ((l.erp_product_name || "") + " " + (l.marketplace_title || "") + " " + (l.erp_product_model || "")).toLowerCase();
+                    let match = text.match(/(\d+)\s*mm/);
+                    let size = match ? match[1] : null;
+                    return { line: l, size: size };
+                }).filter(x => x.size !== null);
+                
+                // Check if unique sizes > 1
+                let uniqueSizes = [...new Set(parsedWatchItems.map(x => x.size))];
+                if (uniqueSizes.length > 1) {
+                    // Create pairwise conflicts
+                    for (let i = 0; i < parsedWatchItems.length; i++) {
+                        for (let j = i + 1; j < parsedWatchItems.length; j++) {
+                            if (parsedWatchItems[i].size !== parsedWatchItems[j].size) {
+                                conflicts.push({
+                                    type: "size",
+                                    title: "Akıllı Saat mm Boyut Çelişkisi",
+                                    desc: `${parsedWatchItems[i].size}mm vs ${parsedWatchItems[j].size}mm Boyut Uyuşmazlığı`,
+                                    items: [parsedWatchItems[i].line.line_barcode, parsedWatchItems[j].line.line_barcode],
+                                    badge: `${parsedWatchItems[i].size}mm vs ${parsedWatchItems[j].size}mm`
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Çapraz Model Varyant Çelişkisi Bulucu (Pro vs Pro Max) (PHONE ecosystem only)
+            let phoneAccLines = o.lines.filter(l => getDeviceEcosystem(l) === "phone" && l.erp_category && ["KILIF", "CAM", "KAMERA LENS"].includes(l.erp_category));
+            if (phoneAccLines.length > 1) {
+                let parsedPhoneItems = phoneAccLines.map(l => {
+                    let base = getPhoneBase(l.marketplace_title || l.erp_product_name, l.erp_product_model);
+                    let variant = getPhoneVariant(l.marketplace_title || l.erp_product_name, l.erp_product_model);
+                    return { line: l, base: base, variant: variant };
+                }).filter(x => x.base !== null);
+                
+                // Group by base
+                let baseGroups = {};
+                parsedPhoneItems.forEach(x => {
+                    if (!baseGroups[x.base]) baseGroups[x.base] = [];
+                    baseGroups[x.base].push(x);
+                });
+                
+                for (let base in baseGroups) {
+                    let group = baseGroups[base];
+                    let uniqueVariants = [...new Set(group.map(x => x.variant))];
+                    if (uniqueVariants.length > 1) {
+                        for (let i = 0; i < group.length; i++) {
+                            for (let j = i + 1; j < group.length; j++) {
+                                if (group[i].variant !== group[j].variant) {
+                                    conflicts.push({
+                                        type: "variant",
+                                        title: "Ekran/Kasa Varyant Çakışması",
+                                        desc: `${group[i].variant} vs ${group[j].variant} Uyuşmazlığı`,
+                                        items: [group[i].line.line_barcode, group[j].line.line_barcode],
+                                        badge: `${group[i].variant} vs ${group[j].variant}`
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Şebeke Çelişkisi (4G vs 5G) (PHONE ecosystem only)
+            if (phoneAccLines.length > 1) {
+                let parsedNetItems = phoneAccLines.map(l => {
+                    let text = ((l.erp_product_model || "") + " " + (l.marketplace_title || "") + " " + (l.erp_product_name || "")).toLowerCase();
+                    let gen = "standard";
+                    if (text.includes("5g")) gen = "5G";
+                    else if (text.includes("4g")) gen = "4G";
+                    
+                    let base = getPhoneBase(l.marketplace_title || l.erp_product_name, l.erp_product_model);
+                    return { line: l, base: base, gen: gen };
+                }).filter(x => x.base !== null && x.gen !== "standard");
+                
+                let baseGroups = {};
+                parsedNetItems.forEach(x => {
+                    if (!baseGroups[x.base]) baseGroups[x.base] = [];
+                    baseGroups[x.base].push(x);
+                });
+                
+                for (let base in baseGroups) {
+                    let group = baseGroups[base];
+                    let uniqueGens = [...new Set(group.map(x => x.gen))];
+                    if (uniqueGens.length > 1) {
+                        for (let i = 0; i < group.length; i++) {
+                            for (let j = i + 1; j < group.length; j++) {
+                                if (group[i].gen !== group[j].gen) {
+                                    conflicts.push({
+                                        type: "network",
+                                        title: "Mobil Şebeke Çelişkisi",
+                                        desc: `${group[i].gen} vs ${group[j].gen} Kasa Farklılığı`,
+                                        items: [group[i].line.line_barcode, group[j].line.line_barcode],
+                                        badge: `${group[i].gen} vs ${group[j].gen}`
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Çapraz Marka Çelişkisi (Ecosystem-specific)
+            ["phone", "watch"].forEach(eco => {
+                let ecoLines = o.lines.filter(l => getDeviceEcosystem(l) === eco);
+                if (ecoLines.length > 1) {
+                    let parsedBrands = ecoLines.map(l => {
+                        return { line: l, brand: getBrandName(l.marketplace_title || l.erp_product_name, l.erp_product_model) };
+                    }).filter(x => x.brand !== "Diğer");
+                    
+                    let uniqueBrands = [...new Set(parsedBrands.map(x => x.brand))];
+                    if (uniqueBrands.length > 1) {
+                        for (let i = 0; i < parsedBrands.length; i++) {
+                            for (let j = i + 1; j < parsedBrands.length; j++) {
+                                if (parsedBrands[i].brand !== parsedBrands[j].brand) {
+                                    conflicts.push({
+                                        type: "brand",
+                                        title: eco === "phone" ? "Çapraz Telefon Marka Çelişkisi" : "Çapraz Akıllı Saat Marka Çelişkisi",
+                                        desc: `${parsedBrands[i].brand} ve ${parsedBrands[j].brand} Aksesuarları`,
+                                        items: [parsedBrands[i].line.line_barcode, parsedBrands[j].line.line_barcode],
+                                        badge: `${parsedBrands[i].brand} vs ${parsedBrands[j].brand}`
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 5. Genel Çapraz Model Çelişkisi (Ecosystem-specific)
+            ["phone", "watch"].forEach(eco => {
+                let ecoLines = o.lines.filter(l => getDeviceEcosystem(l) === eco);
+                let resolvedModels = ecoLines.map(l => normalizeModelName(l.erp_product_model)).filter(x => x);
+                let uniqueModels = [...new Set(resolvedModels)];
+                if (uniqueModels.length > 1 && conflicts.filter(c => c.type === "variant" || c.type === "size").length === 0) {
+                    for (let i = 0; i < ecoLines.length; i++) {
+                        for (let j = i + 1; j < ecoLines.length; j++) {
+                            let m1 = ecoLines[i].erp_product_model;
+                            let m2 = ecoLines[j].erp_product_model;
+                            if (m1 && m2 && normalizeModelName(m1) !== normalizeModelName(m2)) {
+                                let cat1 = ecoLines[i].erp_category || "";
+                                let cat2 = ecoLines[j].erp_category || "";
+                                let displayCat = cat1 === cat2 && cat1 ? cat1 : (eco === "phone" ? "Telefon" : "Saat");
+                                displayCat = displayCat.replace(/_/g, ' ').toLowerCase();
+                                if (displayCat.includes("kilif")) displayCat = displayCat.replace("kilif", "kılıf");
+                                let titleCat = displayCat.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+                                conflicts.push({
+                                    type: "model",
+                                    title: `${titleCat} - Modeli Uyuşmazlığı`,
+                                    desc: `${getPremiumModelDisplay(m1)} ve ${getPremiumModelDisplay(m2)} Aksesuarları`,
+                                    items: [ecoLines[i].line_barcode, ecoLines[j].line_barcode],
+                                    badge: `${getPremiumModelDisplay(m1)} vs ${getPremiumModelDisplay(m2)}`
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Collect conflicting barcodes
+            let conflictingBarcodes = new Set();
+            conflicts.forEach(c => {
+                c.items.forEach(b => conflictingBarcodes.add(b));
+            });
+
+            // Helper to render a single product card HTML
+            function renderProductCard(line, isConflict) {
+                let catClass = (line.erp_category || "KILIF").replace(/\s+/g, '_');
+                let conflictClass = isConflict ? "in-conflict" : "";
+                
+                let highlightBadges = "";
+                if (isConflict) {
+                    let itemText = ((line.erp_product_name || "") + " " + (line.marketplace_title || "") + " " + (line.erp_product_model || "")).toLowerCase();
+                    
+                    let sizeMatch = itemText.match(/(\d+)\s*mm/);
+                    if (sizeMatch) {
+                        highlightBadges += `<span class="conflict-property-badge"><i class="fa-solid fa-clock"></i> ${sizeMatch[0].toUpperCase()}</span>`;
+                    }
+                    
+                    let variant = getPhoneVariant(line.marketplace_title || line.erp_product_name, line.erp_product_model);
+                    if (variant !== "Standart") {
+                        highlightBadges += `<span class="conflict-property-badge"><i class="fa-solid fa-mobile-screen"></i> ${variant}</span>`;
+                    }
+                    
+                    if (itemText.includes("5g")) {
+                        highlightBadges += `<span class="conflict-property-badge"><i class="fa-solid fa-tower-cell"></i> 5G</span>`;
+                    } else if (itemText.includes("4g")) {
+                        highlightBadges += `<span class="conflict-property-badge"><i class="fa-solid fa-tower-cell"></i> 4G</span>`;
+                    }
+                    
+                    let brand = getBrandName(line.marketplace_title || line.erp_product_name, line.erp_product_model);
+                    if (brand !== "Diğer") {
+                        highlightBadges += `<span class="conflict-property-badge"><i class="fa-solid fa-copyright"></i> ${brand}</span>`;
+                    }
+                }
+
+                return `
+                    <div class="basket-item-card ${catClass} ${conflictClass}">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.15rem;">
+                            <span style="font-size: 0.65rem; font-weight: 800; opacity: 0.8; letter-spacing: 0.03em; color: var(--text-secondary);">${line.erp_category || 'DİĞER'}</span>
+                            <span style="font-family: monospace; font-size: 0.68rem; color: var(--text-muted);">x${line.quantity}</span>
+                        </div>
+                        <strong style="font-size: 0.8rem; color: var(--text-primary); text-overflow: ellipsis; white-space: nowrap; overflow: hidden;" title="${line.erp_product_name || line.marketplace_title}">
+                            ${line.erp_product_name || line.marketplace_title}
+                        </strong>
+                        <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem;">
+                            <i class="fa-solid fa-mobile-screen-button" style="color: var(--color-green); font-size: 0.65rem;"></i> Model: <strong style="color: var(--text-primary); font-size: 0.72rem;">${line.erp_product_model || 'Belirlenemedi'}</strong>
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted); font-family: monospace;">Barkod: ${line.line_barcode}</div>
+                        ${highlightBadges ? `<div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.2rem;">${highlightBadges}</div>` : ""}
+                    </div>
+                `;
+            }
+
+            let basketGroupsHtml = "";
+
+            if (conflicts.length > 0) {
+                // Group by conflicts
+                let uniqueConflicts = [];
+                let seenKeys = new Set();
+                conflicts.forEach(c => {
+                    let key = c.type + "_" + c.badge;
+                    if (!seenKeys.has(key)) {
+                        seenKeys.add(key);
+                        uniqueConflicts.push(c);
+                    }
+                });
+
+                uniqueConflicts.forEach((c, idx) => {
+                    // Find product lines involved in this specific conflict
+                    let involvedLines = o.lines.filter(l => c.items.includes(l.line_barcode));
+                    let cardsHtml = involvedLines.map(l => renderProductCard(l, true)).join("");
+
+                    basketGroupsHtml += `
+                        <div style="border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.02); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.02);">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif;">
+                                <span style="background: var(--color-red); color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700;">${idx + 1}</span>
+                                <strong style="color: var(--color-red); font-size: 0.95rem;">[${c.title}]</strong>
+                                <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">— ${c.desc}</span>
+                            </div>
+                            <div class="basket-cards-grid" style="margin-bottom: 0;">
+                                ${cardsHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // Find compatible/matching product pairs/groups by device model
+            let modelGroups = {};
+            o.lines.forEach(l => {
+                let model = l.erp_product_model;
+                if (model) {
+                    let norm = normalizeModelName(model);
+                    if (!modelGroups[norm]) {
+                        modelGroups[norm] = [];
+                    }
+                    modelGroups[norm].push(l);
+                }
+            });
+
+            let renderedInCompatibleGroup = new Set();
+            let compatibleGroupsHtml = "";
+
+            Object.keys(modelGroups).forEach(norm => {
+                let groupLines = modelGroups[norm];
+                if (groupLines.length > 1) {
+                    let cardsHtml = groupLines.map(l => renderProductCard(l, false)).join("");
+                    let modelName = getPremiumModelDisplay(groupLines[0].erp_product_model);
+                    groupLines.forEach(l => renderedInCompatibleGroup.add(l.line_barcode));
+
+                    compatibleGroupsHtml += `
+                        <div style="border: 1px solid rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.02); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.02);">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif; color: var(--color-green);">
+                                <i class="fa-solid fa-circle-check" style="font-size: 1.1rem;"></i>
+                                <strong style="font-size: 0.95rem; color: var(--color-green);">[Uyumlu Model Eşleşmesi: ${modelName}]</strong>
+                                <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">— Bu ürünler aynı cihaz modeli için birbiriyle tam uyumludur.</span>
+                            </div>
+                            <div class="basket-cards-grid" style="margin-bottom: 0;">
+                                ${cardsHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            // Render remaining (other) products that are not part of conflicts and not part of compatible groups
+            let remainingLines = o.lines.filter(l => !conflictingBarcodes.has(l.line_barcode) && !renderedInCompatibleGroup.has(l.line_barcode));
+
+            if (remainingLines.length > 0) {
+                let remainingCardsHtml = remainingLines.map(l => renderProductCard(l, false)).join("");
+                compatibleGroupsHtml += `
+                    <div style="border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.4); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif; color: var(--color-green);">
+                            <i class="fa-solid fa-circle-check" style="font-size: 1rem;"></i>
+                            <strong style="font-size: 0.95rem; color: var(--color-green);">[Uyumlu Diğer Ürünler]</strong>
+                            <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">— Sepetteki diğer bağımsız uyumlu sepet kalemleri</span>
+                        </div>
+                        <div class="basket-cards-grid" style="margin-bottom: 0;">
+                            ${remainingCardsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            basketGroupsHtml += compatibleGroupsHtml;
+
+            // If there are no conflicts and no compatible groups (e.g. only 1 item in order)
+            if (conflicts.length === 0 && compatibleGroupsHtml === "") {
+                let allCardsHtml = o.lines.map(l => renderProductCard(l, false)).join("");
+                basketGroupsHtml = `
+                    <div style="border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.01); border-radius: 12px; padding: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif; color: var(--color-green);">
+                            <i class="fa-solid fa-circle-check" style="font-size: 1.1rem;"></i>
+                            <strong style="font-size: 0.95rem; color: var(--color-green);">[Sipariş Güvenli]</strong>
+                            <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">— Bütün sepet ürünleri birbirleriyle tam uyumludur.</span>
+                        </div>
+                        <div class="basket-cards-grid" style="margin-bottom: 0;">
+                            ${allCardsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Combine into main Basket Panel
+            basketHtml = "";
+
+            let flagsHtml = "";
+            if (o.flags.length === 0) {
+                flagsHtml = `
+                    <div class="flag-desc-card INFO" style="border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.03);">
+                        <i class="fa-solid fa-circle-check flag-desc-icon" style="color: var(--color-green);"></i>
+                        <div class="flag-desc-text">
+                            <h4 style="color: var(--color-green);">Güvenli Sipariş</h4>
+                            <p>Siparişteki ürünler cihaz modelleriyle tamamen uyumludur. WhatsApp onayı gönderilebilir.</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                o.flags.forEach(f => {
+                    const iconMap = {
+                        "CRITICAL": "fa-triangle-exclamation",
+                        "WARNING": "fa-circle-exclamation",
+                        "INFO": "fa-circle-info"
+                    };
+                    const scoreBadgeHtml = f.score ? `<span style="font-size: 0.72rem; background: rgba(255, 255, 255, 0.08); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.1); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 700; margin-left: 0.5rem;">+${f.score} Puan</span>` : '';
+                    
+                    // Dinamik ürün kartları oluşturucu (Görsel Zenginlik)
+                    let productCardsHtml = "";
+                    let catName = f.category || null;
+                    
+                    // Fallback to title parsing if category is not explicitly set
+                    if (!catName) {
+                        const categoriesList = ["KILIF", "CAM", "GARD", "KAMERA LENS", "KORDON", "SAAT_KILIF"];
+                        for (const cat of categoriesList) {
+                            if (f.title.toUpperCase().includes(cat)) {
+                                catName = cat;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (catName) {
+                        const cats = catName.split('_AND_');
+                        let matchingLines = [];
+                        if (f.mismatched_barcodes && f.mismatched_barcodes.length > 0) {
+                            matchingLines = o.lines.filter(l => f.mismatched_barcodes.includes(l.line_barcode) || f.mismatched_barcodes.includes(l.erp_product_id));
+                        } else {
+                            matchingLines = o.lines.filter(l => cats.includes(l.erp_category));
+                        }
+                        
+                        let majorityLines = [];
+                        let minorityLines = [];
+                        if (f.majority_barcodes && f.majority_barcodes.length > 0 && f.minority_barcodes && f.minority_barcodes.length > 0) {
+                            const majList = f.majority_barcodes.map(String);
+                            const minList = f.minority_barcodes.map(String);
+                            majorityLines = o.lines.filter(l => {
+                                const b = l.line_barcode ? String(l.line_barcode) : "";
+                                const pid = l.erp_product_id ? String(l.erp_product_id) : "";
+                                return majList.includes(b) || majList.includes(pid);
+                            });
+                            minorityLines = o.lines.filter(l => {
+                                const b = l.line_barcode ? String(l.line_barcode) : "";
+                                const pid = l.erp_product_id ? String(l.erp_product_id) : "";
+                                return minList.includes(b) || minList.includes(pid);
+                            });
+                        }
+
+                        if (matchingLines.length > 0) {
+                            // Map category names to premium glassmorphic colors
+                            const colorMap = {
+                                "KILIF": { text: "var(--color-blue)", bg: "rgba(59, 130, 246, 0.04)", border: "rgba(59, 130, 246, 0.12)" },
+                                "CAM": { text: "var(--color-green)", bg: "rgba(16, 185, 129, 0.04)", border: "rgba(16, 185, 129, 0.12)" },
+                                "KORDON": { text: "var(--color-purple)", bg: "rgba(139, 92, 246, 0.04)", border: "rgba(139, 92, 246, 0.12)" },
+                                "GARD": { text: "var(--color-orange)", bg: "rgba(249, 115, 22, 0.04)", border: "rgba(249, 115, 22, 0.12)" },
+                                "KAMERA LENS": { text: "var(--color-red)", bg: "rgba(239, 68, 68, 0.04)", border: "rgba(239, 68, 68, 0.12)" }
+                            };
+                            
+                            const defaultColor = { text: "var(--color-blue)", bg: "rgba(59, 130, 246, 0.04)", border: "rgba(59, 130, 246, 0.12)" };
+                            
+                            if (majorityLines.length > 0 && minorityLines.length > 0) {
+                                // Render row 1: Majority / Correct
+                                productCardsHtml += `
+                                    <div style="margin-top: 0.65rem; margin-bottom: 0.35rem;">
+                                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-green); display: inline-flex; align-items: center; gap: 0.3rem; background: rgba(16, 185, 129, 0.08); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.15);">
+                                            <i class="fa-solid fa-circle-check"></i> DOĞRU / ÇOĞUNLUK KABUL EDİLENLER (${majorityLines.length})
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.85rem;">
+                                `;
+                                
+                                majorityLines.forEach(line => {
+                                    const colors = colorMap[line.erp_category] || defaultColor;
+                                    productCardsHtml += `
+                                        <div style="position: relative; background: ${colors.bg}; border: 1px solid rgba(16, 185, 129, 0.2); padding: 0.85rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02); display: flex; flex-direction: column; gap: 0.4rem; backdrop-filter: blur(5px); min-width: 180px; flex: 1 1 180px;">
+                                            <div style="font-size: 0.7rem; text-transform: uppercase; color: ${colors.text}; font-weight: 700; letter-spacing: 0.05em;">${line.erp_category}</div>
+                                            <strong style="font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 3.5rem;" title="${line.erp_product_name}">${line.erp_product_name}</strong>
+                                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem;">
+                                                <i class="fa-solid fa-mobile-screen-button" style="color: var(--color-green);"></i> Model: <strong>${line.erp_product_model || 'Belirlenemedi'}</strong>
+                                            </div>
+                                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 0.25rem; word-break: break-word;">
+                                                <i class="fa-solid fa-circle-check" style="color: var(--color-green); font-size: 0.68rem; margin-top: 0.15rem;"></i>
+                                                <span>Uyum: <strong>${line.erp_compatible_model || line.erp_product_model || 'Belirlenemedi'}</strong></span>
+                                            </div>
+                                            <div style="font-size: 0.7rem; color: var(--text-secondary); font-family: monospace;">Barkod: ${line.line_barcode}</div>
+                                            <div style="position: absolute; top: 0.65rem; right: 0.65rem; background: rgba(16, 185, 129, 0.12); color: var(--color-green); font-size: 0.58rem; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 4px; text-transform: uppercase; display: flex; align-items: center; gap: 0.15rem;">
+                                                <i class="fa-solid fa-check" style="font-size: 0.55rem;"></i> UYUM
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                                productCardsHtml += `</div>`;
+                                
+                                // Render row 2: Minority / Outlier (Uyuşmayan / Hatalı)
+                                productCardsHtml += `
+                                    <div style="margin-top: 0.85rem; margin-bottom: 0.35rem;">
+                                        <span style="font-size: 0.72rem; font-weight: 700; color: var(--color-red); display: inline-flex; align-items: center; gap: 0.3rem; background: rgba(239, 68, 68, 0.08); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.15);">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> UYUŞMAYAN / HATALI ÜRÜNLER (AZINLIK) (${minorityLines.length})
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.85rem;">
+                                `;
+                                
+                                minorityLines.forEach(line => {
+                                    const colors = colorMap[line.erp_category] || defaultColor;
+                                    productCardsHtml += `
+                                        <div style="position: relative; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.85rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02); display: flex; flex-direction: column; gap: 0.4rem; backdrop-filter: blur(5px); min-width: 180px; flex: 1 1 180px;">
+                                            <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--color-red); font-weight: 700; letter-spacing: 0.05em;">${line.erp_category}</div>
+                                            <strong style="font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 3.5rem;" title="${line.erp_product_name}">${line.erp_product_name}</strong>
+                                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem;">
+                                                <i class="fa-solid fa-mobile-screen-button" style="color: var(--color-red);"></i> Model: <strong style="color: var(--color-red);">${line.erp_product_model || 'Belirlenemedi'}</strong>
+                                            </div>
+                                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 0.25rem; word-break: break-word;">
+                                                <i class="fa-solid fa-circle-xmark" style="color: var(--color-red); font-size: 0.68rem; margin-top: 0.15rem;"></i>
+                                                <span>Uyumsuz: <strong style="color: var(--color-red);">${line.erp_compatible_model || line.erp_product_model || 'Belirlenemedi'}</strong></span>
+                                            </div>
+                                            <div style="font-size: 0.7rem; color: var(--text-secondary); font-family: monospace;">Barkod: ${line.line_barcode}</div>
+                                            <div style="position: absolute; top: 0.65rem; right: 0.65rem; background: rgba(239, 68, 68, 0.12); color: var(--color-red); font-size: 0.58rem; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 4px; text-transform: uppercase; display: flex; align-items: center; gap: 0.15rem;">
+                                                <i class="fa-solid fa-xmark" style="font-size: 0.55rem;"></i> HATA
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                                productCardsHtml += `</div>`;
+                            } else {
+                                productCardsHtml += `
+                                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.85rem; margin-bottom: 0.85rem;">
+                                `;
+                                
+                                matchingLines.forEach(line => {
+                                    const colors = colorMap[line.erp_category] || defaultColor;
+                                    productCardsHtml += `
+                                        <div style="background: ${colors.bg}; border: 1px solid ${colors.border}; padding: 0.85rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02); display: flex; flex-direction: column; gap: 0.4rem; backdrop-filter: blur(5px); min-width: 180px; flex: 1 1 180px;">
+                                            <div style="font-size: 0.7rem; text-transform: uppercase; color: ${colors.text}; font-weight: 700; letter-spacing: 0.05em;">${line.erp_category}</div>
+                                            <strong style="font-size: 0.85rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${line.erp_product_name}">${line.erp_product_name}</strong>
+                                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem;">
+                                                <i class="fa-solid fa-mobile-screen-button" style="color: var(--color-green);"></i> Model: <strong>${line.erp_product_model || 'Belirlenemedi'}</strong>
+                                            </div>
+                                            <div style="font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 0.25rem; word-break: break-word;">
+                                                <i class="fa-solid fa-circle-check" style="color: ${colors.text}; font-size: 0.68rem; margin-top: 0.15rem;"></i>
+                                                <span>Uyum: <strong>${line.erp_compatible_model || line.erp_product_model || 'Belirlenemedi'}</strong></span>
+                                            </div>
+                                            <div style="font-size: 0.7rem; color: var(--text-secondary); font-family: monospace;">Barkod: ${line.line_barcode}</div>
+                                        </div>
+                                    `;
+                                });
+                                productCardsHtml += `</div>`;
+                            }
+                        }
+                    }
+                    
+                    let descHtml = "";
+                    if (f.desc.includes('|')) {
+                        const parts = f.desc.split('|');
+                        descHtml = `
+                            <p style="font-size: 0.88rem; line-height: 1.4; color: var(--text-primary);">${parts[0]}</p>
+                            ${productCardsHtml}
+                            <p style="font-size: 0.88rem; line-height: 1.4; color: var(--text-primary); font-weight: 600; margin-bottom: 0.5rem;">${parts[1]}</p>
+                        `;
+                    } else {
+                        descHtml = `
+                            <p style="font-size: 0.88rem; line-height: 1.4; color: var(--text-primary);">${f.desc}</p>
+                            ${productCardsHtml}
+                        `;
+                    }
+                    
+                    flagsHtml += `
+                        <div class="flag-desc-card ${f.type}">
+                            <i class="fa-solid ${iconMap[f.type] || 'fa-bell'} flag-desc-icon ${f.type}"></i>
+                            <div class="flag-desc-text" style="width: 100%;">
+                                <h4 style="color: ${f.type === 'CRITICAL' ? 'var(--color-red)' : f.type === 'WARNING' ? 'var(--color-orange)' : 'var(--color-blue)'}">${f.title} ${scoreBadgeHtml}</h4>
+                                ${descHtml}
+                                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                                    <button class="btn-view-json" onclick="openAnalysisLog('${escapeHtml(f.title)}', '${escapeHtml(f.desc.replace(/\|/g, ' '))}', '${f.type}', '${o.id}')" style="background: rgba(139, 92, 246, 0.1); color: var(--color-purple); border: 1px solid rgba(139, 92, 246, 0.2); font-size: 0.72rem; padding: 0.25rem 0.55rem; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 600; transition: all 0.2s ease;">
+                                        <i class="fa-solid fa-terminal"></i> Analiz Gerekçesi (Log)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            let linesHtml = "";
+            o.lines.forEach((line, index) => {
+                const listingTable = o.marketplace === 'Trendyol' ? 'product_trendyol' : 'product_hepsiburada';
+                
+                linesHtml += `
+                    <div class="source-tracking-card">
+                        <div class="tracking-header">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="tracking-index">${index + 1}</div>
+                                <div class="tracking-title">Kalem Analizi</div>
+                            </div>
+                            <span class="marketplace-badge ${o.marketplace.toLowerCase()}">${o.marketplace}</span>
+                        </div>
+                        
+                        <div class="analiz-container">
+                            <div class="analiz-section">
+                                <div class="analiz-section-title"><i class="fa-solid fa-basket-shopping" style="color: var(--color-blue);"></i> 1. Sipariş Ham Bilgileri</div>
+                                <div class="analiz-row">
+                                    <span class="analiz-label">Satın Alınan Ürün</span>
+                                    <span class="analiz-value" style="font-weight: 600; max-width: 60%;">${line.marketplace_title}</span>
+                                </div>
+                                <div class="analiz-row">
+                                    <span class="analiz-label">Okunan Barkod</span>
+                                    <span class="analiz-value" style="font-family: monospace; color: var(--color-blue);">${line.line_barcode}</span>
+                                </div>
+                            </div>
+                            <div class="flow-connector"><i class="fa-solid fa-arrow-down-long"></i> Eşleştirme Köprüsü</div>
+                            <div class="analiz-section" style="border-color: rgba(59, 130, 246, 0.15);">
+                                <div class="analiz-section-title"><i class="fa-solid fa-link" style="color: var(--color-blue);"></i> 2. Eşleşme İzleyici</div>
+                                <div class="analiz-row">
+                                    <span class="analiz-label">Sipariş Barkodu</span>
+                                    <span class="analiz-value" style="font-family: monospace;">${line.line_barcode}</span>
+                                </div>
+                                <div class="analiz-row">
+                                    <span class="analiz-label">Eşleştiği Tablo</span>
+                                    <span><span class="db-tag table">${listingTable}</span></span>
+                                </div>
+                            </div>
+                            <div class="flow-connector"><i class="fa-solid fa-arrow-down-long"></i> ERP Ürün Çözümlemesi</div>
+                            <div class="analiz-section" style="border-color: rgba(139, 92, 246, 0.15);">
+                                <div class="analiz-section-title"><i class="fa-solid fa-server" style="color: var(--color-purple);"></i> 3. Depo ERP Ürün Detayı</div>
+                                <div class="analiz-row">
+                                    <span class="analiz-label">Depo Ürün Adı</span>
+                                    <span class="analiz-value" style="color: var(--color-purple); font-weight: 600;">${line.erp_product_name}</span>
+                                </div>
+                                <div class="analiz-row">
+                                    <span class="analiz-label">Kategori</span>
+                                    <span class="analiz-value"><span style="background: rgba(59,130,246,0.15); color: var(--color-blue); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">${line.erp_category || 'Bilinmiyor'}</span></span>
+                                </div>
+                                <div class="analiz-row">
+                                    <span class="analiz-label">Uyumlu Cihaz Modeli</span>
+                                    <span class="analiz-value" style="color: var(--color-green); font-weight: 700; font-size: 0.95rem;">
+                                        <i class="fa-solid fa-mobile-screen-button"></i> ${line.erp_product_model || 'Belirlenemedi'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 12px; margin-bottom: 1rem; font-size: 0.85rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem;">
+                    <div>Müşteri: <strong style="color: var(--text-primary);">${o.customer_name}</strong></div>
+                    <div>Sipariş No: <strong style="color: var(--text-primary);">#${o.order_number}</strong></div>
+                    <div>Pazaryeri: <span class="marketplace-badge ${o.marketplace.toLowerCase()}">${o.marketplace}</span></div>
+                    <div>Tarih: <strong style="color: var(--text-primary);">${o.order_date ? o.order_date.substring(0,10) : '-'}</strong></div>
+                </div>
+
+                <!-- Premium Risk Gauge Progress Bar -->
+                <div style="border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; font-family: 'Outfit', sans-serif;">
+                        <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-gauge-high" style="color: ${o.status_color === 'red' ? 'var(--color-red)' : o.status_color === 'orange' ? 'var(--color-orange)' : 'var(--color-green)'}"></i> 
+                            Sipariş Risk Seviyesi
+                        </span>
+                        <strong style="font-size: 1.2rem; color: ${o.status_color === 'red' ? 'var(--color-red)' : o.status_color === 'orange' ? 'var(--color-orange)' : 'var(--color-green)'}">%${o.risk_score}</strong>
+                    </div>
+                    <div style="width: 100%; height: 10px; background: rgba(15, 23, 42, 0.06); border-radius: 50px; overflow: hidden; border: 1px solid rgba(15, 23, 42, 0.03); margin-bottom: 1rem;">
+                        <div style="width: ${o.risk_score}%; height: 100%; background: linear-gradient(90deg, ${o.status_color === 'red' ? 'var(--color-red)' : o.status_color === 'orange' ? 'var(--color-orange)' : 'var(--color-green)'}, ${o.status_color === 'red' ? '#ff6b6b' : o.status_color === 'orange' ? '#ff9f43' : '#2ecc71'}); border-radius: 50px; transition: width 0.5s ease-in-out;"></div>
+                    </div>
+                    
+                    <!-- Integrated Warning Status Box -->
+                    <div class="status-header ${statusClass}" style="margin-top: 1rem; margin-bottom: 0; padding: 0.8rem 1rem; font-size: 0.95rem; border-radius: 8px;">
+                        <i class="fa-solid ${statusIcon} status-icon" style="font-size: 1.25rem;"></i>
+                        <div>${statusText}</div>
+                    </div>
+                </div>
+
+                <!-- Sepet ve Görsel Risk Çakışma Haritası -->
+                ${basketHtml}
+
+                <div class="detail-section-title"><i class="fa-solid fa-shield-halved"></i> Risk & Hata Analiz Sonucu</div>
+                <div style="margin-bottom: 1.5rem;">
+                    ${flagsHtml}
+                </div>
+
+                <div class="detail-section-title"><i class="fa-solid fa-database"></i> Veritabanı Kaynak İzleyici</div>
+                <div>
+                    ${linesHtml}
+                </div>
+            `;
+        }
+
+        // ERP Ürün Eşleşmeleri Tablosunu Doldur
+        function renderERPProductsTable() {
+            const tbody = document.getElementById("erp-products-table-body");
+            tbody.innerHTML = "";
+
+            let uniqueProducts = [];
+            let seenProductIds = new Set();
+
+            ordersData.forEach(o => {
+                o.lines.forEach(line => {
+                    if (line.erp_product_id && !seenProductIds.has(line.erp_product_id)) {
+                        seenProductIds.add(line.erp_product_id);
+                        uniqueProducts.push(line);
+                    }
+                });
+            });
+
+            uniqueProducts.forEach(p => {
+                const tr = `
+                    <tr>
+                        <td style="font-family: monospace; font-size: 0.75rem;">${p.erp_product_id.substring(0, 8)}...</td>
+                        <td><strong>${p.line_barcode}</strong></td>
+                        <td style="color: var(--text-primary); font-weight: 500;">${p.erp_product_name}</td>
+                        <td><span style="background: rgba(59,130,246,0.1); color: var(--color-blue); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">${p.erp_category}</span></td>
+                        <td style="color: #10b981; font-weight: 600;">${p.erp_product_model}</td>
+                        <td style="font-size: 0.75rem;">${p.erp_compatible_model}</td>
+                        <td>${p.erp_color || '-'}</td>
+                        <td>150 (Simüle)</td>
+                    </tr>
+                `;
+                tbody.innerHTML += tr;
+            });
+        }
+
+        // --- SEKME 2: LİSTE TABANLI ÜRÜN İLİŞKİ VE DÜZENLEME HARİTASI ---
+
+        function fetchProducts() {
+            document.getElementById("relations-loader").style.display = "flex";
+            
+            const brand = document.getElementById("filter-brand").value;
+            const model = document.getElementById("filter-model").value;
+            const search = document.getElementById("search-product").value;
+            const sort_by = document.getElementById("sort-product").value;
+            
+            let url = `/api/products?sort_by=${sort_by}`;
+            if(brand && brand !== 'ALL') url += `&brand=${brand}`;
+            if(model && model !== 'ALL') url += `&model=${model}`;
+            if(search) url += `&search=${search}`;
+            
+            fetch(url)
+                .then(res => res.json())
+                .then(products => {
+                    const tbody = document.getElementById("relations-table-body");
+                    tbody.innerHTML = "";
+                    
+                    if (products.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Aradığınız kriterlere uygun ürün ilişkisi bulunamadı.</td></tr>`;
+                        document.getElementById("relations-loader").style.display = "none";
+                        return;
+                    }
+                    
+                    products.forEach(p => {
+                        const trHtml = `
+                            <tr class="relation-row" onclick="toggleDrawer('${p.id}')">
+                                <td style="font-family: monospace; font-weight: 600; color: var(--color-blue);">${p.barcode}</td>
+                                <td style="color: var(--text-primary); font-weight: 500;">${p.name}</td>
+                                <td><span style="background: rgba(59,130,246,0.1); color: var(--color-blue); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.7rem;">${p.category}</span></td>
+                                <td style="font-weight: 600; color: #10b981;"><i class="fa-solid fa-mobile-screen-button"></i> ${p.product_model || 'Girilmemiş'}</td>
+                                <td><strong>${p.stock_quantity} adet</strong></td>
+                                <td>
+                                    <span style="background: rgba(139,92,246,0.12); color: var(--color-purple); border: 1px solid rgba(139,92,246,0.25); padding: 0.2rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">
+                                        <i class="fa-solid fa-circle-nodes"></i> ${p.compatible_devices.length} Eşleşme
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr id="drawer-${p.id}" class="expanded-drawer-row">
+                                <td colspan="6" style="padding: 0;">
+                                    <div class="drawer-content-container">
+                                        
+                                        <!-- Sol Bölüm: Uyumlu Cihaz Modelleri (DÜZENLENEBİLİR) -->
+                                        <div>
+                                            <div class="drawer-title"><i class="fa-solid fa-mobile-screen-button" style="color: var(--color-green);"></i> Uyumlu Cihaz Modelleri (Düzenlenebilir)</div>
+                                            
+                                            <!-- Piller (Active models) -->
+                                            <div class="compat-node-list" id="compat-list-${p.id}">
+                                                ${renderCompatPills(p.id, p.compatible_devices)}
+                                            </div>
+                                            
+                                            <!-- Ekleme Formu -->
+                                            <div class="compat-add-form">
+                                                <input type="text" id="add-input-${p.id}" class="form-control" placeholder="Uyumlu cihaz modeli yazın (Örn: iPhone 13 Pro Max)...">
+                                                <button class="btn-add-pill" onclick="handleAddMapping('${p.id}')">
+                                                    <i class="fa-solid fa-plus"></i> Ekle
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Sağ Bölüm: Bağlı Pazaryeri Barkodları & Vitrin İlanları -->
+                                        <div style="border-left: 1px solid rgba(255,255,255,0.05); padding-left: 1.5rem;">
+                                            <div class="drawer-title"><i class="fa-solid fa-store" style="color: var(--color-blue);"></i> Bağlı Pazaryeri İlan Vitrinleri</div>
+                                            <div class="items-list" style="margin-top: 0; padding-top: 0; border: none; gap: 0.50rem;">
+                                                ${renderMarketplaceListings(p.listings)}
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += trHtml;
+                    });
+                    document.getElementById("relations-loader").style.display = "none";
+                })
+                .catch(err => {
+                    console.error("Ürünler alınamadı:", err);
+                    document.getElementById("relations-loader").style.display = "none";
+                });
+        }
+
+        // Çekmeceyi Aç/Kapat
+        function toggleDrawer(id) {
+            // Açılacak drawer satırı
+            const drawer = document.getElementById(`drawer-${id}`);
+            const isActive = drawer.classList.contains("active");
+            
+            // Diğer tüm çekmeceleri kapat
+            document.querySelectorAll(".expanded-drawer-row").forEach(d => d.classList.remove("active"));
+            
+            // Eğer kapalıysa aç
+            if(!isActive) {
+                drawer.classList.add("active");
+            }
+        }
+
+        function renderCompatPills(productId, devices) {
+            if (devices.length === 0) {
+                return `<span style="font-size: 0.8rem; color: var(--text-secondary); font-style: italic;">Hiç uyumlu cihaz eşleştirilmemiş.</span>`;
+            }
+            
+            return devices.map(dev => `
+                <span class="compat-node-pill">
+                    <i class="fa-solid fa-circle-check"></i> ${dev}
+                    <button class="btn-pill-delete" onclick="handleDeleteMapping('${productId}', '${dev}')" title="Sil">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </span>
+            `).join("");
+        }
+
+        function renderMarketplaceListings(listings) {
+            if (listings.length === 0) {
+                return `<div class="item-row" style="font-style: italic;">Hiçbir pazaryeri ilanı bu ürüne bağlanmamış.</div>`;
+            }
+            
+            return listings.map(l => `
+                <div class="item-row" style="padding: 0.6rem 0.8rem;">
+                    <div style="display: flex; flex-direction: column; gap: 0.2rem; max-width: 80%;">
+                        <strong style="color: var(--text-primary); font-size: 0.82rem;">${l.title}</strong>
+                        <span style="font-size: 0.72rem; color: var(--text-secondary); font-family: monospace;">Barkod: ${l.barcode}</span>
+                    </div>
+                    <span class="marketplace-badge ${l.marketplace.toLowerCase()}">${l.marketplace}</span>
+                </div>
+            `).join("");
+        }
+
+        // Haritaya Eşleşme Ekle (Düzenleme)
+        function handleAddMapping(productId) {
+            const input = document.getElementById(`add-input-${productId}`);
+            const device_model = input.value.trim();
+            if(!device_model) return;
+            
+            fetch("/api/products/mappings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ product_id: productId, device_model: device_model })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    input.value = "";
+                    fetchProducts();
+                    reloadData();
+                    showToast("Başarılı", "Uyumlu cihaz modeli başarıyla eklendi.", "success");
+                } else {
+                    showToast("Ekleme Hatası", data.error, "error");
+                }
+            });
+        }
+
+        // Haritadan Eşleşmeyi Sil (Düzenleme)
+        function handleDeleteMapping(productId, deviceModel) {
+            event.stopPropagation(); // Satır tıklama olayını engelle (Çekmecenin kapanmasını önler)
+            
+            if(!confirm(`'${deviceModel}' uyumluluk eşleşmesini kaldırmak istediğinize emin misiniz?`)) return;
+            
+            fetch(`/api/products/mappings?product_id=${productId}&device_model=${deviceModel}`, {
+                method: "DELETE"
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    fetchProducts();
+                    reloadData();
+                    showToast("Başarılı", "Cihaz uyumluluk eşleşmesi kaldırıldı.", "success");
+                } else {
+                    showToast("Silme Hatası", data.error, "error");
+                }
+            });
+        }
+
+        // ÖNDEN HAZIRLIK: YENİ ÜRÜNLERİ OTOMATİK EŞLEŞTİR BATCH JOB
+        function handlePreMatchBatch() {
+            document.getElementById("relations-loader").style.display = "flex";
+            
+            fetch("/api/products/pre-match", { method: "POST" })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("relations-loader").style.display = "none";
+                    if(data.success) {
+                        showToast("Ön Eşleştirme Başarılı", `Veritabanındaki ${data.matched_count} adet yeni ürünün cihaz modelleri YZ/Regex motoru ile analiz edildi ve ilişki haritası başarıyla oluşturuldu!`, "success");
+                        fetchProducts();
+                        reloadData();
+                    } else {
+                        showToast("Hata", data.error, "error");
+                    }
+                })
+                .catch(err => {
+                    console.error("Batch çalıştırılamadı:", err);
+                    document.getElementById("relations-loader").style.display = "none";
+                    showToast("Bağlantı Hatası", "Batch işlemi başlatılamadı.", "error");
+                });
+        }
+
+        // --- RİSK KURALLARI CRUD YÖNETİMİ ---
+
+        function fetchRules() {
+            document.getElementById("rules-loader").style.display = "flex";
+            fetch("/api/rules")
+                .then(res => res.json())
+                .then(rules => {
+                    const tbody = document.getElementById("rules-table-body");
+                    tbody.innerHTML = "";
+                    
+                    if (rules.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">Hiç aktif kural bulunamadı.</td></tr>`;
+                        document.getElementById("rules-loader").style.display = "none";
+                        return;
+                    }
+                    
+                    rules.forEach(rule => {
+                        const brandVal = rule.brand && rule.brand.trim() !== "" 
+                            ? `<i class="fa-solid fa-mobile-screen-button" style="color: var(--color-blue); margin-right: 0.5rem;"></i> ${rule.brand}`
+                            : `<span style="color: var(--text-secondary); font-style: italic; font-size: 0.8rem;">Tüm Markalar</span>`;
+
+                        const patternHtml = rule.model_pattern && rule.model_pattern.trim() !== "" 
+                            ? `<span style="background: rgba(249, 115, 22, 0.1); color: var(--color-orange); border: 1px solid rgba(249,115,22,0.2); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">${rule.model_pattern}</span>` 
+                            : `<span style="color: var(--text-secondary); font-style: italic; font-size: 0.8rem;">Tüm Modeller</span>`;
+                            
+                        const barcodesHtml = rule.barcodes && rule.barcodes.trim() !== ""
+                            ? `<span style="font-family: monospace; background: rgba(59, 130, 246, 0.08); color: var(--color-blue); border: 1px solid rgba(59,130,246,0.15); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem; display: inline-block; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${rule.barcodes}">${rule.barcodes}</span>`
+                            : `<span style="color: var(--text-secondary); font-style: italic; font-size: 0.8rem;">-</span>`;
+
+                        const tr = `
+                            <tr>
+                                <td style="font-weight: 600; color: var(--text-primary);">${brandVal}</td>
+                                <td>${patternHtml}</td>
+                                <td>${barcodesHtml}</td>
+                                <td>${rule.warning_message}</td>
+                                <td><span class="flag-badge INFO"><i class="fa-solid fa-circle-check"></i> Aktif</span></td>
+                                <td>
+                                    <button class="btn-delete" onclick="handleDeleteRule('${rule.id}')" title="Kuralı Sil">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += tr;
+                    });
+                    document.getElementById("rules-loader").style.display = "none";
+                })
+                .catch(err => {
+                    console.error("Kurallar alınamadı:", err);
+                    document.getElementById("rules-loader").style.display = "none";
+                });
+        }
+
+        function handleCreateRule(event) {
+            event.preventDefault();
+            
+            const brand = document.getElementById("rule-brand").value;
+            const model_pattern = document.getElementById("rule-pattern").value;
+            const barcodes = document.getElementById("rule-barcodes").value;
+            const warning_message = document.getElementById("rule-message").value;
+            
+            if (!brand.trim() && !barcodes.trim()) {
+                showToast("Eksik Bilgi", "Lütfen bir cihaz markası girin veya barkod listesi ekleyin.", "error");
+                return;
+            }
+
+            fetch("/api/rules", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ brand, model_pattern, warning_message, barcodes })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("new-rule-form").reset();
+                    fetchRules();
+                    reloadData();
+                    showToast("Başarılı", "Yeni risk kuralı başarıyla eklendi.", "success");
+                } else {
+                    showToast("Hata", data.error, "error");
+                }
+            })
+            .catch(err => {
+                console.error("Kural kaydedilemedi:", err);
+                showToast("Hata", "Kural kaydedilemedi.", "error");
+            });
+        }
+
+        function handleDeleteRule(ruleId) {
+            if (!confirm("Bu risk kuralını silmek istediğinize emin misiniz?")) return;
+            
+            fetch(`/api/rules/${ruleId}`, { method: "DELETE" })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    fetchRules();
+                    reloadData();
+                    showToast("Başarılı", "Risk kuralı başarıyla silindi.", "success");
+                } else {
+                    showToast("Hata", data.error, "error");
+                }
+            })
+            .catch(err => {
+                console.error("Kural silinemedi:", err);
+                showToast("Hata", "Kural silinemedi.", "error");
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function parse_brand(name) {
+            if (!name) return "other";
+            name = name.toLowerCase();
+            if (name.includes("iphone") || name.includes("apple") || name.includes("watch")) return "apple";
+            if (name.includes("samsung")) return "samsung";
+            if (name.includes("redmi") || name.includes("xiaomi")) return "xiaomi";
+            if (name.includes("huawei")) return "huawei";
+            if (name.includes("honor")) return "honor";
+            return "other";
+        }
+
+        function openAnalysisLog(title, desc, type, orderId) {
+            const modal = document.getElementById("analysis-log-modal");
+            const modalTitle = document.getElementById("analysis-flag-title");
+            const modalDesc = document.getElementById("analysis-flag-desc");
+            const traceContainer = document.getElementById("analysis-terminal-trace");
+            
+            modalTitle.innerText = title;
+            modalDesc.innerText = desc;
+            
+            // Find the order object to get product lines
+            const order = ordersData.find(o => o.id === orderId || String(o.id) === String(orderId));
+            const lines = order ? order.lines : [];
+            
+            // Build dynamic terminal logs based on the rules triggered
+            let logs = [];
+            const timeStr = new Date().toLocaleTimeString();
+            
+            logs.push(`<span style="color: #64748b;">[${timeStr}] [SYSTEM_BOOT] Katmanlı kural analiz motoru (Rule Engine v1.2) başlatıldı.</span>`);
+            logs.push(`<span style="color: #64748b;">[${timeStr}] [LAYER_1] Sepet ön filtresi denetleniyor...</span>`);
+            
+            if (lines.length === 1) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_1] Sepette tek ürün saptandı (B2C Triage). Cihaz model çakışması taranamayacağı için Katman 2 atlandı, doğrudan Katman 3'e yönlendiriliyor.</span>`);
+            } else {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_1] Sepette çoklu ürün kalemi (${lines.length} adet) saptandı. Katman 2 (Çapraz Model Analizi) başlatılıyor.</span>`);
+            }
+            
+            // Determine rules based on flag title and build visual explanations
+            let whyText = "";
+            let howSteps = [];
+            let matchParams = [];
+            let actionText = "";
+            let actionIcon = "fa-hand-holding-hand";
+            let actionColor = "var(--color-orange)";
+            
+            const lowerTitle = title.toLowerCase();
+            const lowerDesc = desc.toLowerCase();
+            
+            if (lowerTitle.includes("boyut uyuşmazlığı") || lowerTitle.includes("pro vs pro max")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_2] Kategori 'KILIF/CAM/GARD' olan aksesuarlar taranıyor...</span>`);
+                logs.push(`<span style="color: #c084fc;">[${timeStr}] [LAYER_2] 'parse_phone_variant()' algoritması çalıştırılıyor...</span>`);
+                
+                const lineModels = lines.map(l => `${l.erp_product_name} [Model: ${l.erp_product_model || 'Bilinmeyen'}]`);
+                logs.push(`<span style="color: #64748b;">[${timeStr}] [ALGORITHM] Çözümlenen ERP modelleri:<br>&nbsp;&nbsp; - ` + lineModels.join("<br>&nbsp;&nbsp; - ") + `</span>`);
+                
+                logs.push(`<span style="color: #f472b6;">[${timeStr}] [ALGORITHM] Cihaz Serisi Uyuşmazlık Tespiti: Aynı marka-seriye (iPhone) ait çakışan ekran varyantları saptandı!</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [MATCH] Uyuşmayan varyasyonlar: Pro vs Pro Max. Kesişim Kümesi Boş! ({Pro} ∩ {Pro Max} = ∅)</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [RULE_TRIGGERED] Kural 1.1 (Çapraz Model Boyut Çelişkisi) TETİKLENDİ!</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [SCORE] Risk skoru +90 artırıldı. Seviye: CRITICAL 🔴</span>`);
+                logs.push(`<span style="color: #10b981;">[${timeStr}] [DECISION] Sipariş risk kuyruğuna alındı. Önerilen WhatsApp Şablonu: 'uyumsuz_sepet_uyarisi'.</span>`);
+                logs.push(`<span style="color: #10b981;">[${timeStr}] [SYNC] ERP sipariş onay durumu 'HOLD' konumuna çekilerek sevkiyat geçici olarak donduruldu.</span>`);
+                
+                whyText = "Müşteri aynı marka ve cihaz serisine (iPhone) ait biri Pro, diğeri Pro Max olan iki adet aksesuar sipariş etmiştir. Bu cihazların fiziksel boyutları, kamera modülleri ve kasa yapıları birbirinden tamamen farklıdır. Bir kişinin aynı siparişte hem Pro hem Pro Max için kılıf alması çok düşük bir olasılıktır ve %95 oranında sipariş hatası barındırır.";
+                howSteps = [
+                    "Kural motoru sepetteki <code>KILIF/CAM/GARD</code> aksesuarlarını taradı.",
+                    "<code>parse_phone_variant()</code> regex algoritması çalıştırılarak ürün başlıklarındaki cihaz markaları ve ekran varyasyonları çözümlendi.",
+                    "Aynı cihaz serisinde (<code>iPhone</code>) hem <code>Pro</code> hem <code>Pro Max</code> varyantı taşıyan ürünlerin sepete eklendiği saptandı ve kesişim kümesinin boş olduğu ({Pro} ∩ {Pro Max} = ∅) ispatlandı."
+                ];
+                matchParams = [
+                    { label: "Cihaz Serisi", value: "Apple iPhone" },
+                    { label: "Çakışan Varyantlar", value: "<span style='background: rgba(239, 68, 68, 0.1); color: var(--color-red); border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;'>Pro</span> vs <span style='background: rgba(249, 115, 22, 0.1); color: var(--color-orange); border: 1px solid rgba(249, 115, 22, 0.2); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;'>Pro Max</span>" },
+                    { label: "Uyumsuzluk Riski", value: "Gövde ve Ekran Boyutu Çakışması" }
+                ];
+                actionText = "ERP sipariş onay durumu geçici olarak askıya alındı (<b>HOLD</b>). WhatsApp hattı üzerinden <code>uyumsuz_sepet_uyarisi</code> şablonuyla otomatik teyit mesajı gönderilmek üzere kuyruğa eklendi.";
+                actionIcon = "fa-circle-pause";
+                actionColor = "var(--color-red)";
+            } 
+            else if (lowerTitle.includes("ağ nesli") || lowerTitle.includes("4g vs 5g")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_2] Cihaz ağ teknolojileri denetleniyor...</span>`);
+                logs.push(`<span style="color: #c084fc;">[${timeStr}] [LAYER_2] 'parse_network_gen()' algoritması çalıştırılıyor...</span>`);
+                
+                const lineModels = lines.map(l => `${l.erp_product_name} [Model: ${l.erp_product_model || 'Bilinmeyen'}]`);
+                logs.push(`<span style="color: #64748b;">[${timeStr}] [ALGORITHM] Çözümlenen ERP modelleri:<br>&nbsp;&nbsp; - ` + lineModels.join("<br>&nbsp;&nbsp; - ") + `</span>`);
+                
+                logs.push(`<span style="color: #f472b6;">[${timeStr}] [ALGORITHM] Ağ Nesli Uyuşmazlık Tespiti: Aynı seride hem 4G hem 5G uyumlu aksesuarlar bir arada bulundu!</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [MATCH] Farklı ağ teknolojileri kasa/ekran çakışmasına neden oldu (4G kasası ile 5G kasası uyumsuzdur).</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [RULE_TRIGGERED] Kural 1.2 (Ağ Nesli Çelişkisi) TETİKLENDİ!</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [SCORE] Risk skoru +85 artırıldı. Seviye: CRITICAL 🔴</span>`);
+                logs.push(`<span style="color: #10b981;">[${timeStr}] [DECISION] Sipariş risk kuyruğuna alındı. Önerilen WhatsApp Şablonu: 'uyumsuz_sepet_uyarisi'.</span>`);
+                logs.push(`<span style="color: #10b981;">[${timeStr}] [SYNC] ERP siparişi askıya alındı (HOLD).</span>`);
+                
+                whyText = "Xiaomi Redmi ve Samsung serisi cihazlarda aynı model ismini taşıyan ancak biri 4G, diğeri 5G olan cihazların kasa boyutları, kalınlıkları ve kamera yerleşimleri tamamen farklıdır. Sepette aynı seriye ait hem 4G hem 5G ürünlerin yer alması, müşterinin kendi telefonunun ağ teknolojisinden emin olamadığını veya yanlışlıkla yanlış olanı sepete eklediğini gösterir.";
+                howSteps = [
+                    "Kural motoru sepetteki aksesuarların ağ teknolojisi takılarını denetledi.",
+                    "<code>parse_network_gen()</code> algoritması ile ürün başlıklarından <code>4G</code> ve <code>5G</code> varyasyon etiketleri ayrıştırıldı.",
+                    "Aynı cihaz modeli ailesinde farklı ağ nesli aksesuarlarının bir arada sipariş edildiği saptanarak kritik kasa uyumsuzluğu tescillendi."
+                ];
+                matchParams = [
+                    { label: "Uyumlu Cihaz Ailesi", value: "Redmi / Samsung Serisi" },
+                    { label: "Çakışan Ağ Nesilleri", value: "<span style='background: rgba(249, 115, 22, 0.1); color: var(--color-orange); border: 1px solid rgba(249, 115, 22, 0.2); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;'>4G</span> vs <span style='background: rgba(59, 130, 246, 0.1); color: var(--color-blue); border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.15rem 0.4rem; border-radius: 4px; font-weight: 600; font-size: 0.72rem;'>5G</span>" },
+                    { label: "Uyumsuzluk Türü", value: "Kasa Kalınlığı ve Kamera Yuvası Çelişkisi" }
+                ];
+                actionText = "ERP siparişi askıya alındı (<b>HOLD</b>). Müşteriye WhatsApp üzerinden cihazın ağ neslini (4G/5G) doğrulayıcı özel teyit mesajı gönderilecektir.";
+                actionIcon = "fa-shield-halved";
+                actionColor = "var(--color-red)";
+            } 
+            else if (lowerTitle.includes("saat mm") || lowerTitle.includes("milimetre")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_2] Akıllı saat milimetre uyumluluğu sorgulanıyor...</span>`);
+                logs.push(`<span style="color: #c084fc;">[${timeStr}] [LAYER_2] 'parse_smartwatch_mm()' algoritması çalıştırılıyor...</span>`);
+                
+                const lineSizes = lines.map(l => `${l.erp_product_name}`);
+                logs.push(`<span style="color: #64748b;">[${timeStr}] [ALGORITHM] Çözümlenen saat aksesuarları:<br>&nbsp;&nbsp; - ` + lineSizes.join("<br>&nbsp;&nbsp; - ") + `</span>`);
+                
+                logs.push(`<span style="color: #f472b6;">[${timeStr}] [ALGORITHM] Boyut Çelişki Tespiti: Kordon milimetre boyutu ile ekran koruyucu kasa milimetre boyutu çelişiyor!</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [RULE_TRIGGERED] Kural 1.3 (Akıllı Saat Boyut Çelişkisi) TETİKLENDİ!</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [SCORE] Risk skoru +75 artırıldı. Seviye: CRITICAL 🔴</span>`);
+                logs.push(`<span style="color: #10b981;">[${timeStr}] [SYNC] ERP sipariş statüsü 'HOLD' olarak kilitlendi.</span>`);
+                
+                whyText = "Apple Watch veya Galaxy Watch serilerinde milimetre (mm) ölçüleri kasa boyutunu temsil eder (örn. 41mm ve 45mm). Farklı milimetre ölçülerindeki ekran koruyucu kasalar, kordonlar veya şarj stantları saate fiziksel olarak kesinlikle oturmaz. Bu siparişteki milimetre uyuşmazlığı doğrudan yanlış ürün siparişi anlamına gelir.";
+                howSteps = [
+                    "Kural motoru akıllı saat kordon ve koruyucu kasa kalemlerini izole etti.",
+                    "<code>parse_smartwatch_mm()</code> regex modülü ile ürün isimleri ve ERP model tanımlarından milimetre (mm) boyutları ayıklandı.",
+                    "Farklı milimetre boyutlarının aynı sepette olduğu ve kasa-kordon çelişkisi oluşturduğu saptandı."
+                ];
+                matchParams = [
+                    { label: "Kategori", value: "Akıllı Saat Aksesuarları" },
+                    { label: "Tespit Edilen Ölçüler", value: "Uyuşmayan Milimetre Değerleri" },
+                    { label: "Fiziksel Çelişki", value: "Kasa Boyutu ve Kordon Genişliği Uyumsuzluğu" }
+                ];
+                actionText = "ERP siparişi askıya alındı (<b>HOLD</b>). Sevkiyat öncesi WhatsApp teyit mesajı ile saat kasa ölçüsünün netleştirilmesi planlandı.";
+                actionIcon = "fa-stopwatch";
+                actionColor = "var(--color-red)";
+            }
+            else if (lowerTitle.includes("aynı cihaz modelinden")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_2] Kategori içi model tekilliği taranıyor...</span>`);
+                logs.push(`<span style="color: #c084fc;">[${timeStr}] [LAYER_2] Aynı kategoride mükerrer alım analizi başlatıldı.</span>`);
+                logs.push(`<span style="color: #f472b6;">[${timeStr}] [MATCH] Tek bir model için aynı kategoriden çoklu ürün alımı algılandı.</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [RULE_TRIGGERED] Kural 1.0 (Aynı Modelden Çoklu Aksesuar) TETİKLENDİ!</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [SCORE] Risk skoru +80 artırıldı. Seviye: CRITICAL 🔴</span>`);
+                logs.push(`<span style="color: #10b981;">[${timeStr}] [DECISION] Müşteriye WhatsApp'tan adet doğrulaması öneriliyor. ERP 'HOLD' yapıldı.</span>`);
+                
+                whyText = "Bir müşterinin bireysel siparişte aynı cihaz modeli için aynı kategoriden birden fazla aksesuar sipariş etmesi (örn. 3 adet aynı iPhone 16 Pro kılıfı), çoğunlukla sepet hatasından (adet artırma butonuna yanlışlıkla birden fazla basılması) veya sistemsel mükerrer tıklamadan kaynaklanır. Kargo maliyeti ve iade riski nedeniyle teyit edilmelidir.";
+                howSteps = [
+                    "Sipariş satırları ERP kategorisine göre gruplandı.",
+                    "Aynı kategoriden (örn. <code>KILIF</code>) birden fazla ürün olduğu saptandı.",
+                    "Modellerin birebir aynı (<code>benzersiz model = 1</code>) olduğu doğrulanarak yüksek adetli mükerrerlik alarmı tetiklendi."
+                ];
+                matchParams = [
+                    { label: "Çakışan Kategori", value: "Aynı Kategori Grubu" },
+                    { label: "Çözümlenen Model", value: "Tekil Cihaz Modeli" },
+                    { label: "Mükerrerlik Sebebi", value: "Aynı Cihaza Çoklu Alım" }
+                ];
+                actionText = "ERP sipariş statüsü askıya alındı (<b>HOLD</b>). WhatsApp üzerinden sepet adedinin bilinçli seçilip seçilmediğine dair doğrulama mesajı tetiklendi.";
+                actionIcon = "fa-clone";
+                actionColor = "var(--color-red)";
+            }
+            else if (lowerTitle.includes("farklı cihaz modellerinden")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_2] Kategori içi model çeşitliliği taranıyor...</span>`);
+                logs.push(`<span style="color: #64748b;">[${timeStr}] [MATCH] Sepetteki kılıf/aksesuarlar farklı cihazlar için seçilmiş.</span>`);
+                logs.push(`<span style="color: #c084fc;">[${timeStr}] [LAYER_3] Marka & alt model hassasiyeti taranıyor... Temiz.</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [RULE_TRIGGERED] Kural 1.0 (Farklı Modelden Çoklu Aksesuar) TETİKLENDİ.</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [SCORE] Risk skoru +40 artırıldı. Seviye: WARNING 🟡</span>`);
+                logs.push(`<span style="color: #10b981;">[${timeStr}] [DECISION] Sipariş onay bekliyor, WhatsApp'tan model teyidi önerildi.</span>`);
+                
+                whyText = "Sepette aynı kategoride ancak farklı cihaz modelleri için aksesuarlar (örn. iPhone 11 ve iPhone 16 Pro kılıfı) yer almaktadır. Bu durum genellikle aile üyelerine hediye olarak bilinçli yapılsa da, bazen eski ve yeni telefon modellerinin karıştırılmasından kaynaklanır. Tedbir amaçlı kontrol edilmesi önerilir.";
+                howSteps = [
+                    "Sipariş satırları kategorilerine göre filtrelendi.",
+                    "Aynı kategoriden birden fazla ürün olduğu saptandı.",
+                    "Modeller çözümlendiğinde birden fazla benzersiz cihaz modeli tespit edilerek düşük riskli uyarı seviyesi oluşturuldu."
+                ];
+                matchParams = [
+                    { label: "Kategori", value: "Ortak Kategori Grubu" },
+                    { label: "Çözümlenen Modeller", value: "Farklı Cihaz Modelleri" },
+                    { label: "Risk Derecesi", value: "Düşük Riskli Model Çeşitliliği" }
+                ];
+                actionText = "Sipariş dondurulmadı ancak teyit edilmesi için panelde uyarı rozetiyle işaretlendi. WhatsApp üzerinden model doğrulama önerilmektedir.";
+                actionIcon = "fa-circle-nodes";
+                actionColor = "var(--color-orange)";
+            }
+            else if (lowerTitle.includes("yüksek adetli") || lowerTitle.includes("adet uyarısı")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_3] B2C sipariş adet limit denetimi başlatıldı...</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [MATCH] Tekil bir barkodun sipariş adedi >= 3 (Sepet hatası ihtimali).</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [RULE_TRIGGERED] Kural 1.5 (B2C Yüksek Adet) TETİKLENDİ.</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [SCORE] Risk skoru +45 artırıldı. Seviye: WARNING 🟡</span>`);
+                
+                whyText = "Bireysel e-ticaret (B2C) siparişlerinde tek bir üründen 3 adet veya daha fazla sipariş edilmesi, sepet sayfasındaki adet butonunun karıştırılması riski barındırır. Özellikle toptan sipariş olmayan durumlarda müşterinin yanlışlıkla fazla adet girmesi sık rastlanan bir kullanıcı hatasıdır.";
+                howSteps = [
+                    "Sipariş kalemlerindeki satın alma adetleri (<code>quantity</code>) denetlendi.",
+                    "Bireysel bir üründe sipariş miktarının kritik tüketici eşik limitini (<code>>= 3 adet</code>) aştığı saptandı.",
+                    "Kullanıcı hatası riski nedeniyle uyarı bayrağı kaldırıldı."
+                ];
+                matchParams = [
+                    { label: "Analiz Edilen Ürün", value: "Tekil Sipariş Kalemi" },
+                    { label: "Sipariş Adedi", value: "Kritik Limit Aşımı (>= 3)" },
+                    { label: "Risk Türü", value: "Yanlış Adet Girişi İhtimali" }
+                ];
+                actionText = "Sipariş onay bekliyor. Müşteriye WhatsApp'tan adet teyidi gönderilmesi sevk doğruluğunu artıracaktır.";
+                actionIcon = "fa-cart-flatbed-suitcases";
+                actionColor = "var(--color-orange)";
+            }
+            else if (lowerTitle.includes("çapraz marka")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_2] Çapraz marka analizi başlatıldı...</span>`);
+                logs.push(`<span style="color: #c084fc;">[${timeStr}] [LAYER_2] 'parse_brand()' algoritması çalıştırılıyor...</span>`);
+                
+                const brands = lines.map(l => parse_brand(l.erp_product_name || ''));
+                logs.push(`<span style="color: #64748b;">[${timeStr}] [ALGORITHM] Çözümlenen cihaz markaları: [${brands.join(", ").toUpperCase()}]</span>`);
+                
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [MATCH] Sepette farklı markalara ait ürünler bir arada bulundu (Cross-Brand).</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [RULE_TRIGGERED] Kural 1.4 (Çapraz Marka Çelişkisi) TETİKLENDİ.</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [SCORE] Risk skoru +35 artırıldı. Seviye: WARNING 🟡</span>`);
+                
+                whyText = "Aynı siparişte tamamen farklı cihaz markalarına (örn. Apple ve Samsung) ait aksesuarların yer alması durumudur. Müşteri farklı telefonlar kullanan iki kişi için alıyor olabileceği gibi, kendi telefonunun markasını karıştırmış olması da olasıdır. Uyumsuzluk riskini önlemek için kontrol edilmelidir.";
+                howSteps = [
+                    "Sipariş kalemleri <code>parse_brand()</code> fonksiyonuna gönderildi.",
+                    "Ürün başlıkları ve model tanımlarındaki marka bilgileri ayrıştırıldı.",
+                    "Aynı siparişte birden fazla dev cihaz markasının (örn. <code>Apple</code> ve <code>Samsung</code>) yer aldığı doğrulanarak uyarı tetiklendi."
+                ];
+                matchParams = [
+                    { label: "Çözümlenen Markalar", value: "Çoklu Cihaz Markaları" },
+                    { label: "Risk Türü", value: "Marka Karışıklığı İhtimali" }
+                ];
+                actionText = "Sipariş onay bekliyor. WhatsApp model teyidi yardımıyla marka doğrulaması yapılması tavsiye edilir.";
+                actionIcon = "fa-shuffle";
+                actionColor = "var(--color-orange)";
+            }
+            else if (lowerTitle.includes("çapraz kategori cihaz modeli uyuşmazlığı") || lowerTitle.includes("çapraz kategori")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_2] Çapraz kategori cihaz modeli uyuşmazlık araması başlatıldı...</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [MATCH] Farklı kategorilerde uyuşmayan cihaz modelleri tespit edildi.</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [RULE_TRIGGERED] Kural 1.6 (Çapraz Kategori Çelişkisi) TETİKLENDİ.</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [SCORE] Risk skoru +40 artırıldı. Seviye: WARNING 🟡</span>`);
+                
+                whyText = "Siparişteki farklı aksesuarların (örn. kılıf ve ekran koruyucu cam) uyumlu olduğu belirtilen cihaz modellerinin birbirinden farklı olması durumudur. Bir kılıf iPhone 16 Pro için seçilmişken ekran koruyucu camın iPhone 16 Pro Max için seçilmesi, iki aksesuarın aynı cihazda bir arada kullanılamayacağını ve siparişin hatalı olduğunu gösterir.";
+                howSteps = [
+                    "Siparişteki tüm aksesuar kalemlerinin ERP uyumlu modelleri listelendi.",
+                    "Modeller arasında uyuşmazlık analizi yapıldı.",
+                    "Kılıf ile camın veya kordonun uyumlu olduğu modellerin birbiriyle çeliştiği tespit edildi."
+                ];
+                matchParams = [
+                    { label: "Aksesuar Kalemleri", value: "Çapraz Kategori Ürünleri" },
+                    { label: "Uyumsuzluk Detayı", value: "Kılıf & Cam Modeli Çelişkisi" },
+                    { label: "Kesişim Kümesi", value: "Boş Küme (Farklı Kasa Boyutları)" }
+                ];
+                actionText = "Sipariş askıya alınmadı ancak onay öncesi incelenmek üzere uyarı durumuna çekildi. Müşteriyle WhatsApp üzerinden iletişime geçilerek model teyidi yapılması önerilir.";
+                actionIcon = "fa-arrows-left-right-to-line";
+                actionColor = "var(--color-orange)";
+            }
+            else if (lowerTitle.includes("riskli marka") || lowerTitle.includes("monitored") || lowerTitle.includes("hassas marka") || lowerTitle.includes("kritik marka")) {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_3] Marka & Alt Model Hassas Filtresi aktif...</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [MATCH] Ürün başlığında veya modelinde çok sık karıştırılan hassas kelime tespit edildi.</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [RULE_TRIGGERED] Kural 2.0 (Dinamik Risk Kuralı - Monitored Keyword) TETİKLENDİ.</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [SCORE] Risk skoru +50 artırıldı. Seviye: WARNING 🟡</span>`);
+                logs.push(`<span style="color: #10b981;">[${timeStr}] [DECISION] WhatsApp 'alt_model_dogrulama' kuyruğuna yönlendirildi.</span>`);
+                
+                whyText = "Sipariş edilen ürün, ERP yöneticileri tarafından 'Hassas/Riskli Alt Modeller' listesinde tanımlanmıştır. Bu modeller, müşteriler tarafından en sık karıştırılan (örn. Lite vs Pro, Plus vs standard, düz Watch vs Watch Ultra) ve iade oranı son derece yüksek olan ürün gruplarıdır. Yanlış siparişi önlemek için kural tetiklenmiştir.";
+                howSteps = [
+                    "Aktif monitored risk kuralları veritabanından sorgulandı.",
+                    "Sipariş edilen ürünün adı ve modeli (<code>search_space</code>) riskli kelime ve marka filtreleriyle karşılaştırıldı.",
+                    "ERP yöneticilerinin tanımladığı kural deseniyle birebir eşleşme saptanarak hassas uyarı bayrağı kaldırıldı."
+                ];
+                matchParams = [
+                    { label: "Tetiklenen Kural", value: "Dinamik Risk ve Hassasiyet Kuralı" },
+                    { label: "Eşleşen Kriter", value: "Hassas Kelime / Marka Deseni" },
+                    { label: "Risk Nedeni", value: "Yüksek İade Oranı & Model Karışıklığı" }
+                ];
+                actionText = "Sipariş onay bekliyor. Müşteriye WhatsApp 'alt_model_dogrulama' şablonu ile otomatik doğrulama mesajı gönderilmesi önerilir.";
+                actionIcon = "fa-triangle-exclamation";
+                actionColor = "var(--color-orange)";
+            }
+            else {
+                logs.push(`<span style="color: #38bdf8;">[${timeStr}] [LAYER_3] Hassas filtre taramaları tamamlanıyor...</span>`);
+                logs.push(`<span style="color: #e67e22;">[${timeStr}] [MATCH] Tanımlanmış risk kuralı veya uyuşmazlık tespit edildi.</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [RULE_TRIGGERED] Risk analizi tetiklendi.</span>`);
+                logs.push(`<span style="color: #fb7185;">[${timeStr}] [SCORE] Risk skoru güncellendi: %${order ? order.risk_score : 50}</span>`);
+                
+                whyText = "Siparişte tanımlanmış bir kural veya belirli bir cihaz uyuşmazlığı tespit edilmiştir. Ürünlerin başlıkları ve veritabanı eşleşmeleri analiz edilerek siparişin güvenli bir şekilde sevk edilip edilemeyeceği denetlenmektedir.";
+                howSteps = [
+                    "Sipariş kalemleri Katmanlı Kural Analiz Motoru tarafından incelendi.",
+                    "Veritabanı ilişkileri ve uyumluluk tabloları taranarak eşleşmeler sağlandı.",
+                    "Kural motoru belirlenen risk seviyesine göre risk skorunu güncelledi."
+                ];
+                matchParams = [
+                    { label: "Risk Puanı", value: `%${order ? order.risk_score : 50}` },
+                    { label: "Analiz Edilen Alanlar", value: "Barkod, Model, Kategori ve Marka" },
+                    { label: "Genel Durum", value: "Onay Bekleyen Sipariş" }
+                ];
+                actionText = "Sipariş onay sürec için incelemeye alınmıştır. Gerekli görülmesi halinde WhatsApp hattı üzerinden teyit mesajı gönderilebilir.";
+                actionIcon = "fa-shield-halved";
+                actionColor = "var(--color-blue)";
+            }
+            
+            logs.push(`<span style="color: #64748b;">[${timeStr}] [SYSTEM_HALT] Kural motoru analizi sonlandırdı. Karar onaylandı.</span>`);
+            
+            traceContainer.innerHTML = logs.join("<br>");
+            
+            // Generate visual explanations
+            let stepsHtml = "";
+            howSteps.forEach((step, idx) => {
+                stepsHtml += `
+                    <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                        <div style="background: rgba(139, 92, 246, 0.15); color: var(--color-purple); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 0.1rem; border: 1px solid rgba(139, 92, 246, 0.3); font-family: 'Outfit', sans-serif;">${idx + 1}</div>
+                        <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;">${step}</div>
+                    </div>
+                `;
+            });
+            
+            let paramsHtml = "";
+            matchParams.forEach(param => {
+                paramsHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem; font-size: 0.8rem;">
+                        <span style="color: var(--text-secondary); font-weight: 500;">${param.label}</span>
+                        <strong style="color: var(--text-primary); text-align: right;">${param.value}</strong>
+                    </div>
+                `;
+            });
+            
+            const explanationView = document.getElementById("analysis-explanation-view");
+            explanationView.innerHTML = `
+                <!-- Why Section -->
+                <div style="background: rgba(139, 92, 246, 0.03); border: 1px solid rgba(139, 92, 246, 0.12); padding: 1.1rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.5rem; backdrop-filter: blur(5px);">
+                    <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--color-purple); font-weight: 800; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-circle-question" style="font-size: 0.9rem;"></i> 1. NEDEN BU SONUCA VARDIK? (ANALİZ GEREKÇESİ)
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin: 0;">${whyText}</p>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem;">
+                    <!-- How Section -->
+                    <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); padding: 1.1rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.85rem;">
+                        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--color-blue); font-weight: 800; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+                            <i class="fa-solid fa-gears" style="font-size: 0.9rem;"></i> 2. NASIL BU SONUCA VARDIK? (ALGORİTMA ZİNCİRİ)
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            ${stepsHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- Params & Actions -->
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <!-- Match Parameters -->
+                        <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); padding: 1.1rem; border-radius: 12px; display: flex; flex-direction: column; gap: 0.65rem;">
+                            <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--color-green); font-weight: 800; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+                                <i class="fa-solid fa-sliders" style="font-size: 0.9rem;"></i> 3. EŞLEŞME PARAMETRELERİ
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                ${paramsHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Taken Section -->
+                <div style="background: rgba(16, 185, 129, 0.03); border: 1px solid rgba(16, 185, 129, 0.12); padding: 1.1rem; border-radius: 12px; display: flex; gap: 1rem; align-items: center;">
+                    <div style="background: rgba(16, 185, 129, 0.1); color: var(--color-green); width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; border: 1px solid rgba(16, 185, 129, 0.2);">
+                        <i class="fa-solid ${actionIcon}"></i>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--color-green); font-weight: 800; letter-spacing: 0.05em;">
+                            4. UYGULANAN ONAY AKSİYONU & ERP SENKRONİZASYONU
+                        </div>
+                        <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4; margin: 0;">${actionText}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Default to explanation tab
+            switchAnalysisTab('explanation');
+            
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.querySelector(".modal-content").style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        function switchAnalysisTab(tabName) {
+            const expView = document.getElementById("analysis-explanation-view");
+            const termView = document.getElementById("analysis-terminal-view");
+            const buttons = document.querySelectorAll(".analysis-tab-btn");
+            
+            if (tabName === 'explanation') {
+                expView.style.display = 'flex';
+                termView.style.display = 'none';
+                buttons[0].classList.add("active");
+                buttons[0].style.color = "var(--color-purple)";
+                buttons[0].style.borderBottom = "2px solid var(--color-purple)";
+                buttons[1].classList.remove("active");
+                buttons[1].style.color = "var(--text-secondary)";
+                buttons[1].style.borderBottom = "2px solid transparent";
+            } else {
+                expView.style.display = 'none';
+                termView.style.display = 'flex';
+                buttons[1].classList.add("active");
+                buttons[1].style.color = "var(--color-purple)";
+                buttons[1].style.borderBottom = "2px solid var(--color-purple)";
+                buttons[0].classList.remove("active");
+                buttons[0].style.color = "var(--text-secondary)";
+                buttons[0].style.borderBottom = "2px solid transparent";
+            }
+        }
+
+        function closeAnalysisLogModal() {
+            const modal = document.getElementById("analysis-log-modal");
+            modal.style.opacity = '0';
+            modal.querySelector(".modal-content").style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+    </script>
+    
+    <!-- Analysis Log Modal (Premium Terminal & Visual Decision Proof Design) -->
+    <div id="analysis-log-modal" class="modal-overlay" onclick="closeAnalysisLogModal(event)" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: auto;">
+        <div class="modal-content" onclick="event.stopPropagation()" style="background: var(--panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-radius: 20px; width: 90%; max-width: 750px; padding: 2rem; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15); transform: scale(0.95); transition: transform 0.3s ease; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
+                <h3 style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem; font-family: 'Outfit', sans-serif; color: var(--text-primary); font-weight: 700;">
+                    <i class="fa-solid fa-square-poll-vertical" style="color: var(--color-purple);"></i> Kural Motoru Risk Analiz Gerekçesi
+                </h3>
+                <button onclick="closeAnalysisLogModal()" style="background: transparent; border: none; font-size: 1.2rem; color: var(--text-secondary); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Flag info summary bar -->
+            <div style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                <div style="flex-grow: 1;">
+                    <div style="font-size: 0.68rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; margin-bottom: 0.15rem;">Tetiklenen Bayrak</div>
+                    <strong id="analysis-flag-title" style="color: var(--text-primary); font-size: 0.92rem; display: block;"></strong>
+                </div>
+                <div id="analysis-flag-desc" style="font-size: 0.82rem; color: var(--text-secondary); max-width: 60%; text-align: right; line-height: 1.3;"></div>
+            </div>
+            
+            <!-- Analysis Tabs -->
+            <div class="analysis-tabs" style="display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; margin-top: 0.25rem;">
+                <button class="analysis-tab-btn active" onclick="switchAnalysisTab('explanation')" style="background: transparent; border: none; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; color: var(--color-purple); border-bottom: 2px solid var(--color-purple); font-size: 0.85rem; font-family: 'Outfit', sans-serif; transition: all 0.2s ease;">
+                    <i class="fa-solid fa-chart-line"></i> Analiz & Karar Gerekçesi
+                </button>
+                <button class="analysis-tab-btn" onclick="switchAnalysisTab('terminal')" style="background: transparent; border: none; padding: 0.5rem 1rem; cursor: pointer; font-weight: 600; color: var(--text-secondary); border-bottom: 2px solid transparent; font-size: 0.85rem; font-family: 'Outfit', sans-serif; transition: all 0.2s ease;">
+                    <i class="fa-solid fa-terminal"></i> Terminal Trace Logu
+                </button>
+            </div>
+            
+            <!-- Tab Content Views -->
+            <div style="min-height: 300px; display: flex; flex-direction: column;">
+                <!-- 1. Explanation Tab -->
+                <div id="analysis-explanation-view" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Content will be injected dynamically -->
+                </div>
+                
+                <!-- 2. Terminal Tab -->
+                <div id="analysis-terminal-view" style="display: none; flex-direction: column; gap: 0.5rem;">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem; font-family: 'Outfit', sans-serif;">
+                        <i class="fa-solid fa-terminal" style="color: var(--color-blue);"></i> Kural Motoru Adım Adım Karar İspatı
+                    </span>
+                    <div id="analysis-terminal-trace" style="font-family: monospace; font-size: 0.76rem; background: #0f172a; color: #38bdf8; padding: 1.25rem; border-radius: 12px; line-height: 1.6; max-height: 280px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);">
+                        <!-- Trace log items here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: auto;">
+                <button onclick="closeAnalysisLogModal()" class="nav-btn active" style="padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.88rem; cursor: pointer; background: var(--color-purple); color: white; border: none; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);">Anladım, Kapat</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
