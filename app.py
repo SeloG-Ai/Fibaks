@@ -88,6 +88,7 @@ DB_NAME = os.getenv("DB_NAME", "fibaks_erp")
 
 # Database Mode Flag: 'postgres' or 'sqlite'
 DB_MODE = 'postgres'
+DB_CONN_ERROR = None
 
 # Setup templates directory
 templates = Jinja2Templates(directory="templates")
@@ -134,7 +135,7 @@ def initialize_postgres_db(conn):
         cur.close()
 
 def get_db_connection():
-    global DB_MODE
+    global DB_MODE, DB_CONN_ERROR
     
     # 1. DATABASE_URL (Render / Supabase / Neon gibi bulut sağlayıcılar için)
     database_url = os.getenv("DATABASE_URL")
@@ -148,8 +149,10 @@ def get_db_connection():
             wrapped_conn = PostgreSQLConnectionWrapper(conn)
             initialize_postgres_db(wrapped_conn)
             ensure_required_tables(wrapped_conn)
+            DB_CONN_ERROR = None  # Reset error on success
             return wrapped_conn, 'postgres'
         except Exception as e:
+            DB_CONN_ERROR = f"DATABASE_URL Connection Error: {str(e)}"
             print(f"Ortam değişkenindeki DATABASE_URL ile PostgreSQL bağlantı hatası: {e}. SQLite'a geçiliyor...")
             
     # 2. Yerel PostgreSQL (DB_MODE = 'postgres')
@@ -167,8 +170,11 @@ def get_db_connection():
             wrapped_conn = PostgreSQLConnectionWrapper(conn)
             initialize_postgres_db(wrapped_conn)
             ensure_required_tables(wrapped_conn)
+            DB_CONN_ERROR = None  # Reset error on success
             return wrapped_conn, 'postgres'
         except Exception as e:
+            if not DB_CONN_ERROR:
+                DB_CONN_ERROR = f"Local PostgreSQL Connection Error: {str(e)}"
             print(f"Yerel PostgreSQL bağlantı hatası: {e}. Yerel SQLite veritabanına geçiş yapılıyor...")
             DB_MODE = 'sqlite'
             
@@ -3809,6 +3815,44 @@ async def update_order_product_models(order_id: str, data: dict):
     finally:
         cur.close()
         conn.close()
+
+@app.get("/api/db-status")
+async def get_db_status():
+    global DB_MODE, DB_CONN_ERROR
+    db_url = os.getenv("DATABASE_URL")
+    masked_url = None
+    if db_url:
+        import urllib.parse
+        try:
+            parsed = urllib.parse.urlsplit(db_url)
+            if parsed.password:
+                masked_url = db_url.replace(parsed.password, "********")
+            else:
+                masked_url = db_url
+        except Exception:
+            masked_url = "[Unparseable URL]"
+            
+    products_count = 0
+    try:
+        conn, mode = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM products;")
+        row = cur.fetchone()
+        if isinstance(row, dict):
+            products_count = list(row.values())[0]
+        else:
+            products_count = row[0]
+        cur.close()
+    except Exception as e:
+        products_count = f"Error: {str(e)}"
+        
+    return {
+        "db_mode": DB_MODE,
+        "database_url_exists": db_url is not None,
+        "database_url_masked": masked_url,
+        "postgres_error": DB_CONN_ERROR,
+        "products_count": products_count
+    }
 
 if __name__ == "__main__":
     import uvicorn
