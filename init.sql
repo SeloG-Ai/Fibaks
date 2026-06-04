@@ -2,13 +2,13 @@
 -- Creates tables and loads seed data representing products, listings, and orders.
 
 CREATE TABLE IF NOT EXISTS products (
-    id UUID PRIMARY KEY,
+    id VARCHAR(255) PRIMARY KEY,
     barcode VARCHAR(255),
     name VARCHAR(255),
     category VARCHAR(100),
     model_code VARCHAR(255),
     color VARCHAR(100),
-    warehouse_id UUID,
+    warehouse_id VARCHAR(255),
     shelf_column VARCHAR(50),
     shelf_row VARCHAR(50),
     stock_quantity INT,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS products (
     avg_sales_before_critical_stock NUMERIC,
     last_below_threshold_date DATE,
     supplier_note TEXT,
-    image_id UUID,
+    image_id VARCHAR(255),
     total_supply_count INT,
     earliest_supply_quantity INT,
     earliest_supply_delivery_date DATE,
@@ -59,8 +59,8 @@ CREATE TABLE IF NOT EXISTS device_generations (
 );
 
 CREATE TABLE IF NOT EXISTS product_trendyol (
-    id UUID PRIMARY KEY,
-    product_id UUID REFERENCES products(id),
+    id VARCHAR(255) PRIMARY KEY,
+    product_id VARCHAR(255) REFERENCES products(id),
     trendyol_id VARCHAR(255),
     barcode VARCHAR(255),
     title VARCHAR(555),
@@ -97,8 +97,8 @@ CREATE TABLE IF NOT EXISTS product_trendyol (
 );
 
 CREATE TABLE IF NOT EXISTS product_hepsiburada (
-    id UUID PRIMARY KEY,
-    product_id UUID REFERENCES products(id),
+    id VARCHAR(255) PRIMARY KEY,
+    product_id VARCHAR(255) REFERENCES products(id),
     hb_sku VARCHAR(255),
     merchant_sku VARCHAR(255),
     barcode VARCHAR(255),
