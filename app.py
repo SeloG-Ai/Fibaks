@@ -89,6 +89,7 @@ DB_NAME = os.getenv("DB_NAME", "fibaks_erp")
 # Database Mode Flag: 'postgres' or 'sqlite'
 DB_MODE = 'postgres'
 DB_CONN_ERROR = None
+DB_INITIALIZED = False
 
 # Setup templates directory
 templates = Jinja2Templates(directory="templates")
@@ -135,7 +136,7 @@ def initialize_postgres_db(conn):
         cur.close()
 
 def get_db_connection():
-    global DB_MODE, DB_CONN_ERROR
+    global DB_MODE, DB_CONN_ERROR, DB_INITIALIZED
     
     # 1. DATABASE_URL (Render / Supabase / Neon gibi bulut sağlayıcılar için)
     database_url = os.getenv("DATABASE_URL")
@@ -144,11 +145,13 @@ def get_db_connection():
             conn = psycopg2.connect(
                 database_url,
                 cursor_factory=RealDictCursor,
-                connect_timeout=5
+                connect_timeout=3
             )
             wrapped_conn = PostgreSQLConnectionWrapper(conn)
-            initialize_postgres_db(wrapped_conn)
-            ensure_required_tables(wrapped_conn)
+            if not DB_INITIALIZED:
+                initialize_postgres_db(wrapped_conn)
+                ensure_required_tables(wrapped_conn)
+                DB_INITIALIZED = True
             DB_CONN_ERROR = None  # Reset error on success
             return wrapped_conn, 'postgres'
         except Exception as e:
@@ -168,8 +171,10 @@ def get_db_connection():
                 connect_timeout=2
             )
             wrapped_conn = PostgreSQLConnectionWrapper(conn)
-            initialize_postgres_db(wrapped_conn)
-            ensure_required_tables(wrapped_conn)
+            if not DB_INITIALIZED:
+                initialize_postgres_db(wrapped_conn)
+                ensure_required_tables(wrapped_conn)
+                DB_INITIALIZED = True
             DB_CONN_ERROR = None  # Reset error on success
             return wrapped_conn, 'postgres'
         except Exception as e:
@@ -184,11 +189,13 @@ def get_db_connection():
     conn = sqlite3.connect(sqlite_db_path)
     conn.row_factory = sqlite_dict_factory
     
-    if not db_exists:
-        print("SQLite veritabanı dosyası oluşturuldu. Tohumlama başlatılıyor...")
-        initialize_sqlite_db(conn)
-    else:
-        ensure_required_tables(conn)
+    if not DB_INITIALIZED:
+        if not db_exists:
+            print("SQLite veritabanı dosyası oluşturuldu. Tohumlama başlatılıyor...")
+            initialize_sqlite_db(conn)
+        else:
+            ensure_required_tables(conn)
+        DB_INITIALIZED = True
         
     return conn, 'sqlite'
 
@@ -3843,6 +3850,7 @@ async def get_db_status():
         else:
             products_count = row[0]
         cur.close()
+        conn.close()
     except Exception as e:
         products_count = f"Error: {str(e)}"
         
