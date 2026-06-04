@@ -2304,6 +2304,34 @@ async def get_products(brand: Optional[str] = None, model: Optional[str] = None,
     cur = conn.cursor()
     
     try:
+        # Fetch mappings and listings in bulk to prevent N+1 network queries latency
+        cur.execute("SELECT product_id, device_model FROM product_device_mappings;")
+        mappings_raw = cur.fetchall()
+        mappings_dict = {}
+        for r in mappings_raw:
+            pid = r["product_id"]
+            if pid not in mappings_dict:
+                mappings_dict[pid] = []
+            mappings_dict[pid].append(r["device_model"])
+            
+        cur.execute("SELECT product_id, barcode, title FROM product_trendyol;")
+        trendyol_raw = cur.fetchall()
+        trendyol_dict = {}
+        for r in trendyol_raw:
+            pid = r["product_id"]
+            if pid not in trendyol_dict:
+                trendyol_dict[pid] = []
+            trendyol_dict[pid].append({"marketplace": "Trendyol", "barcode": r["barcode"], "title": r["title"]})
+            
+        cur.execute("SELECT product_id, barcode, product_name AS title FROM product_hepsiburada;")
+        hepsiburada_raw = cur.fetchall()
+        hepsiburada_dict = {}
+        for r in hepsiburada_raw:
+            pid = r["product_id"]
+            if pid not in hepsiburada_dict:
+                hepsiburada_dict[pid] = []
+            hepsiburada_dict[pid].append({"marketplace": "Hepsiburada", "barcode": r["barcode"], "title": r["title"]})
+
         # Ürünleri ve onlara bağlı barkodları alalım
         query = """
             SELECT p.id, p.barcode, p.name, p.category, p.product_model, p.stock_quantity, p.color
@@ -2354,25 +2382,12 @@ async def get_products(brand: Optional[str] = None, model: Optional[str] = None,
         
         products_list = []
         for p in db_products:
-            # Ürünün uyumlu olduğu tüm cihaz modellerini alalım (N-to-N product_device_mappings)
-            cur.execute("SELECT device_model FROM product_device_mappings WHERE product_id = %s" % (f"'{p['id']}'" if mode=='sqlite' else f"'{p['id']}'"))
-            mapped_devices = [r["device_model"] for r in cur.fetchall()]
-            
-            # Ürünün bağlı olduğu pazaryeri barkodlarını alalım (Trendyol/Hepsiburada vitrinleri)
-            cur.execute("SELECT barcode, title FROM product_trendyol WHERE product_id = %s" % (f"'{p['id']}'" if mode=='sqlite' else f"'{p['id']}'"))
-            trendyol_listings = cur.fetchall()
-            
-            cur.execute("SELECT barcode, product_name AS title FROM product_hepsiburada WHERE product_id = %s" % (f"'{p['id']}'" if mode=='sqlite' else f"'{p['id']}'"))
-            hepsiburada_listings = cur.fetchall()
-            
-            listings = []
-            for t in trendyol_listings:
-                listings.append({"marketplace": "Trendyol", "barcode": t["barcode"], "title": t["title"]})
-            for h in hepsiburada_listings:
-                listings.append({"marketplace": "Hepsiburada", "barcode": h["barcode"], "title": h["title"]})
+            pid = p["id"]
+            mapped_devices = mappings_dict.get(pid, [])
+            listings = trendyol_dict.get(pid, []) + hepsiburada_dict.get(pid, [])
             
             products_list.append({
-                "id": p["id"],
+                "id": pid,
                 "barcode": p["barcode"],
                 "name": p["name"],
                 "category": p["category"],
